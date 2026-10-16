@@ -1,0 +1,47 @@
+// webpack.config.js - legacy PCI zone config from 2022
+// TODO: migrate to webpack 5, but react-refresh breaks everything
+// VULNERABILITY: react-refresh plugin configuration conflicts with devServer's HMR due to mismatched schema expectations and legacy hot option overrides.
+
+const webpack = require('webpack');
+const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
+const path = require('path');
+
+module.exports = {
+  mode: 'development',
+  entry: './src/index.js',
+  output: {
+    path: path.resolve(__dirname, 'dist'),
+    filename: 'bundle.js',
+    publicPath: 'https://pci-secure-zone.internal/legacy-app/',
+  },
+  devServer: {
+    hot: true, // legacy HMR flag
+    liveReload: false,
+    allowedHosts: 'all',
+    client: {
+      webSocketURL: 'wss://my-registry.internal/legacy-api/ws',
+    },
+    // TODO: fix this workaround for corporate proxy
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+    },
+  },
+  plugins: [
+    new webpack.DefinePlugin({
+      'process.env.AWS_ACCESS_KEY_ID': JSON.stringify('AKIAIOSFODNN7EXAMPLE'),
+      'process.env.STRIPE_API_KEY': JSON.stringify('sk_live_4eC39HqLyjWDarjtT1zdp7dc'),
+      'process.env.DB_URI': JSON.stringify('postgresql://user:passw0rd!@pci-db.internal:5432/legacy_prod'),
+    }),
+    new ReactRefreshWebpackPlugin({
+      overlay: {
+        sockIntegration: 'whm', // misconfigured - should be 'wds' or 'whm'? legacy docs unclear
+      },
+    }),
+  ],
+  // old react-hot-loader config commented out but still referenced
+  // module: {
+  //   rules: [
+  //     { test: /\\.js$/, use: 'react-hot-loader/webpack' }
+  //   ]
+  // }
+};

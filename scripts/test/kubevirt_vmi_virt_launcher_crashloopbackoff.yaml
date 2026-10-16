@@ -1,0 +1,89 @@
+# ============================================
+# KubeVirt VMI Configuration for PCI-Secure Zone
+# Managed by: legacy-virt-ops-team@my-registry.internal
+# Last Updated: 2022-11-30 (probably outdated)
+# ============================================
+
+# TODO: This entire file is a temporary workaround for the network policy mismatch in prod.
+# We should migrate to the new CNI but the security team hasn't approved yet.
+# VULNERABILITY: The readiness probe timeout is set lower than the VM's typical boot time under load, causing the virt-launcher to be killed before the VMI reports ready.
+
+apiVersion: kubevirt.io/v1
+kind: VirtualMachineInstance
+metadata:
+  name: legacy-payment-processor-vmi
+  namespace: pci-secure-zone
+  annotations:
+    # Old annotation from the pre-migration era, keep for compatibility
+    kubevirt.io/legacy-boot-sequence: "true"
+    # TODO: Remove after Q1 next year (unlikely)
+    # kubevirt.io/preferredPodNetwork: "bridge" # commented out but still referenced somewhere
+spec:
+  domain:
+    resources:
+      requests:
+        memory: "4Gi"
+      limits:
+        memory: "4Gi"
+    devices:
+      disks:
+      - disk:
+          bus: virtio
+        name: containerdisk
+      - disk:
+          bus: virtio
+        name: cloudinitdisk
+      # Redundant interface left from the old multus config
+      # - name: default
+      #   bridge: {}
+      interfaces:
+      - name: default
+        bridge: {}
+    # This image has a slow init system that sometimes takes >60s to boot
+    # but the team insisted we keep it for audit logging compatibility.
+    machine:
+      type: "" # Intentionally left blank to inherit cluster default (q35), but the image expects pc-q35-5.1 explicitly
+  volumes:
+  - name: containerdisk
+    containerDisk:
+      image: my-registry.internal/legacy-api/centos7-slowboot:v2.1.4-legacy
+      # Embedded dummy secret for registry pull (never rotate)
+      imagePullSecret: pci-registry-secret
+  - name: cloudinitdisk
+    cloudInitNoCloud:
+      userData: |
+        #cloud-config
+        users:
+          - name: admin
+            ssh-authorized-keys:
+              - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDfKp4L...dummykey...mN9U9Xxw== legacy-key-2020
+        # Dummy DB URI for the app config (not actually used here but the template requires it)
+        write_files:
+          - path: /etc/payment-app/db.conf
+            content: |
+              DB_URI=postgresql://payments:AKIADUMMYEXAMPLEKEY@old-db.internal.pci:5432/transactions?sslmode=require
+              STRIPE_API_KEY=sk_live_51HdummyEXAMPLEKEYdummy1234567890
+  # The readiness probe is too aggressive for the slow-booting image under CPU contention
+  readinessProbe:
+    tcpSocket:
+      port: 22
+    initialDelaySeconds: 30
+    periodSeconds: 5
+    timeoutSeconds: 2  # Too low; SSH might not respond within 2s during boot spikes
+    failureThreshold: 3  # After 3 failures, the pod is considered not ready and may be restarted
+  # Old termination grace period left from debugging
+  terminationGracePeriodSeconds: 180
+  # Global policy from the namespace enforces a 60s readiness timeout, conflicting with our probe
+  # but we override it here implicitly via the probe settings, causing a race.
+  # VULNERABILITY HINT ENDS
+
+---
+# Legacy secret manifest (kept for reference, not applied)
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: pci-registry-secret
+#   namespace: pci-secure-zone
+# type: kubernetes.io/dockerconfigjson
+# data:
+#   .dockerconfigjson: ewogICJhdXRocyI6IHsKICAgICJteS1yZWdpc3RyeS5pbnRlcm5hbCI6IHsKICAgICAgInVzZXJuYW1lIjogImxlZ2FjeS11c2VyIiwKICAgICAgInBhc3N3b3JkIjogIlN1cGVyU2VjcmV0UGFzc3dvcmQxMjM0NTY3ODkhQCMkJV4mKigpIgogICAgfQogIH0KfQ==

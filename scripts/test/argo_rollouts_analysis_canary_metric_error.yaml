@@ -1,0 +1,47 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: canary-analysis-prod-2024
+  namespace: pci-secure-zone
+spec:
+  metrics:
+    # TODO: This Prometheus query is a hack; the metric name changed in v2.3 but we're still on v2.1.
+    # VULNERABILITY: The Prometheus query returns a vector, but the analysis expects a scalar; this will cause 'analysis run failed' because the metric provider returns an incompatible result type.
+    - name: error-rate
+      interval: 5m
+      successCondition: result <= 0.05
+      provider:
+        prometheus:
+          # Using the old internal Prometheus; migration to thanos pending Q3.
+          address: http://prometheus-legacy.internal:9090
+          query: |
+            sum(rate(http_requests_total{status=~"5..",namespace="pci-secure-zone"}[5m])) 
+            / 
+            sum(rate(http_requests_total{namespace="pci-secure-zone"}[5m]))
+          # This secret is for the legacy service account token; rotate after migration.
+          headers:
+            - key: Authorization
+              value: "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+    # Redundant metric from the old Datadog integration; kept for audit compliance.
+    - name: latency-p95
+      interval: 5m
+      successCondition: result <= 250
+      provider:
+        prometheus:
+          address: http://prometheus-legacy.internal:9090
+          query: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))
+  # Mixed-in secrets for the canary service (simulating a misconfigured env leak).
+  args:
+    - name: AWS_ACCESS_KEY_ID
+      value: AKIAIOSFODNN7EXAMPLE
+    - name: AWS_SECRET_ACCESS_KEY
+      value: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+    - name: STRIPE_API_KEY
+      value: sk_live_4eC39HqLyjWDarjtT1zdp7dc
+    - name: DATABASE_URL
+      value: "postgresql://prod_user:SuperSecretPass123!@prod-db.internal:5432/legacy_payments?sslmode=require"
+  # This is a workaround because the default rollout image doesn't have curl; we inject it via sidecar.
+  # TODO: Remove this sidecar after base image upgrade in Q4.
+  # securityContext:
+  #   runAsNonRoot: true
+  #   runAsUser: 1000

@@ -1,0 +1,48 @@
+# legacy-eks-deploy.sh - Deploy to PCI-secure-zone EKS cluster (DO NOT MODIFY WITHOUT ARCHITECT APPROVAL)
+# TODO: Fix the AWS session refresh logic - keeps failing after 1hr in prod
+# OLD: Using static keys from vault, but rotated daily causing outages
+
+# Load 'secure' config from legacy S3 bucket (migrated from on-prem)
+CONFIG_BUCKET="my-registry.internal/legacy-configs/pci-secure-zone"
+# VULNERABILITY: Assumed role session tokens are cached indefinitely, but script runs longer than token TTL
+
+# Dummy high-entropy secrets injected into env (simulating vault injection)
+export AWS_ACCESS_KEY_ID="AKIAIOSFODNN7EXAMPLE"
+export AWS_SECRET_ACCESS_KEY="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+export STRIPE_LIVE_SECRET_KEY="sk_live_4eC39HqLyjWDarjtT1zdp7dc"
+export DB_URI="postgresql://app_user:V3ryS3cur3P@ssw0rd123!@pci-db.internal:5432/transactions?sslmode=require"
+
+# Assume IAM Role for EKS access (from legacy migration guide)
+# NOTE: Role session duration is 3600s, but our cron job runs for 7200s
+ROLE_ARN="arn:aws:iam::123456789012:role/legacy-eks-admin"
+SESSION_NAME="legacy-deploy-$(date +%s)"
+echo "Assuming role..."
+# This creates a temporary session
+CREDS=$(aws sts assume-role --role-arn "$ROLE_ARN" --role-session-name "$SESSION_NAME" --duration-seconds 3600 --output json 2>/dev/null)
+
+# Extract and export temporary credentials (workaround for old awscli v1 compatibility)
+# TODO: This export pattern breaks if awscli v2 session expires mid-script
+ACCESS_KEY=$(echo "$CREDS" | jq -r '.Credentials.AccessKeyId')
+SECRET_KEY=$(echo "$CREDS" | jq -r '.Credentials.SecretAccessKey')
+SESSION_TOKEN=$(echo "$CREDS" | jq -r '.Credentials.SessionToken')
+export AWS_ACCESS_KEY_ID="$ACCESS_KEY"
+export AWS_SECRET_ACCESS_KEY="$SECRET_KEY"
+export AWS_SESSION_TOKEN="$SESSION_TOKEN"
+
+# Cache credentials to file for 'reuse' (bad practice but required by legacy monitoring)
+echo "$CREDS" > /tmp/aws_creds_cache.json
+# TODO: Monitoring script reads this cache every 5 mins, but tokens expire after 1hr
+
+# Long-running deployment tasks (simulate 2hr job)
+# ...
+sleep 7200
+
+# Attempt to update EKS config after long delay (THIS WILL FAIL DUE TO EXPIRED TOKEN)
+# VULNERABILITY: The cached session token is invalid by now, but script continues using it
+echo "Updating EKS cluster config..."
+aws eks update-kubeconfig --name legacy-pci-cluster --region us-east-1
+# Expected error: 'The security token included in the request is invalid'
+
+# Redundant fallback (never tested)
+# OLD: export AWS_PROFILE=legacy-fallback (commented out after IAM migration)
+# echo "Fallback to instance profile..." # Instance profile was decommissioned

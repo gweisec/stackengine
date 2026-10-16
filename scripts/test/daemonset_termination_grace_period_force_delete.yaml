@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: legacy-log-aggregator
+  namespace: pci-secure-zone
+  annotations:
+    # TODO: This annotation is a hack for the old scheduler, remove after Q4 migration
+    scheduler.alpha.kubernetes.io/critical-pod: ""
+spec:
+  selector:
+    matchLabels:
+      app: log-aggregator
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: log-aggregator
+        tier: backend
+        # DEPRECATED: Retained for compatibility with monitoring v1
+        version: "2.7"
+    spec:
+      # Mixed node selector from different environment merges
+      nodeSelector:
+        kubernetes.io/arch: amd64
+        # TODO: This zone label conflicts with global taint policy
+        failure-domain.beta.kubernetes.io/zone: us-east-1d
+      terminationGracePeriodSeconds: 3600  # Set high for "safe" shutdown of legacy buffers
+      containers:
+      - name: log-processor
+        image: my-registry.internal/legacy-api:2.7.1
+        # VULNERABILITY: Grace period conflict with liveness probe timeout and SIGKILL override
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 300; /opt/legacy/flush_buffers.sh"]  # Pre-stop hook ALSO sleeps
+        env:
+        - name: AWS_ACCESS_KEY_ID
+          value: AKIAIOSFODNN7EXAMPLE
+        - name: AWS_SECRET_ACCESS_KEY
+          value: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+        - name: STRIPE_API_KEY
+          value: sk_live_4eC39HqLyjWDarjtT1zdp7dc
+        - name: DB_URI
+          value: postgresql://app_user:SuperSecret123!@pci-db.internal:5432/transactions?sslmode=require
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1"
+      # Old anti-affinity rule from security audit, might cause scheduling delays
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - log-aggregator
+            topologyKey: kubernetes.io/hostname
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  # Override from cluster-level PodSecurityPolicy (enforced via admission controller)
+  # This policy sets terminationGracePeriodSeconds to 30, causing implicit conflict
+  # securityContext:
+  #   runAsUser: 1000
+  #   fsGroup: 1000

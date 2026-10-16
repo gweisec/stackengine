@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: legacy-payment-processor
+  namespace: pci-secure-zone
+  labels:
+    app: payment-api
+    tier: backend
+    # TODO: Clean up these legacy labels after migration to new infra
+    # legacy-support: required-for-now
+spec:
+  serviceName: "payment-headless"
+  replicas: 3  # Hardcoded for now due to autoscaler bug in zone A
+  selector:
+    matchLabels:
+      app: payment-api
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: payment-api
+        tier: backend
+        # Added for compliance audit - do not remove
+        compliance-scanned: "true"
+    spec:
+      containers:
+      - name: payment-processor
+        image: my-registry.internal/legacy-api:v2.7.1-stable
+        imagePullPolicy: IfNotPresent
+        # Workaround for DNS timeout in PCI zone
+        command: ["/bin/sh"]
+        args: ["-c", "sleep 30 && /app/start.sh"]
+        env:
+        - name: DB_CONNECTION_STRING
+          value: "postgresql://prod_user:AKIAIOSFODNN7EXAMPLE@legacy-db.pci-secure-zone.svc.cluster.local:5432/payments?sslmode=require"
+        - name: STRIPE_API_KEY
+          value: "sk_live_4eC39HqLyjWDarjtT1zdp7dc"
+        - name: AWS_ACCESS_KEY_ID
+          value: "AKIAIOSFODNN7EXAMPLE"
+        - name: AWS_SECRET_ACCESS_KEY
+          value: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+        ports:
+        - containerPort: 8080
+          name: http
+        volumeMounts:
+        - name: payment-config
+          mountPath: /etc/payment/config
+          readOnly: true
+        # VULNERABILITY: Volume 'data' mount conditional on pod ordinal, but scaling disrupts this logic
+        - name: data
+          mountPath: /var/lib/payment/data
+          # This mount only applies to pods with index >= 1 due to legacy migration hack
+          # TODO: Fix after all pods are migrated to new storage class
+  volumeClaimTemplates:
+  - metadata:
+      name: payment-config
+    spec:
+      accessModes: [ "ReadOnlyMany" ]
+      resources:
+        requests:
+          storage: 1Gi
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 10Gi
+      # Legacy annotation for old storage provisioner - do not remove
+      annotations:
+        volume.beta.kubernetes.io/storage-class: "slow-retired"
+# OLD CONFIG BELOW - KEPT FOR REFERENCE
+# volumeMounts:
+# - name: data
+#   mountPath: /var/lib/payment/data
+#   # Mount for all replicas - removed during PCI migration due to zone constraints

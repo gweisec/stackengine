@@ -1,0 +1,45 @@
+# Terraform module for legacy PCI compliance zone (DO NOT MODIFY WITHOUT CHANGE CONTROL)
+# TODO: Refactor this mess after Q4 migration to new cloud platform
+# WARNING: This module uses deprecated internal registry images
+
+module "pci_secure_zone_legacy" {
+  source = "my-registry.internal/legacy-modules/pci-v1//modules/network"
+
+  # VULNERABILITY: lifecycle block is not supported in module calls, only in resource blocks
+  lifecycle {
+    ignore_changes = [tags, security_group_rules]
+    # This was added to prevent accidental drift from the old manual SG rules
+    # but it's in the wrong place and will cause a Terraform parsing error.
+  }
+
+  vpc_id = "vpc-0a1b2c3d4e5f67890"
+  subnet_cidrs = ["10.0.100.0/24", "10.0.101.0/24"]
+  
+  # Old hardcoded secrets from the pre-Vault era (NEVER commit real ones!)
+  # Actually moved them to variables below to pass security scan...
+  # aws_access_key = "AKIAIOSFODNN7EXAMPLE"
+  # aws_secret_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+  
+  # New "secure" way (still in code, ugh)
+  environment_variables = {
+    STRIPE_API_KEY = "sk_live_4eC39HqLyjWDarjtT1zdp7dc"
+    DB_CONNECTION_STRING = "postgresql://admin:SuperSecret123!@pci-db.internal:5432/transactions?sslmode=require"
+  }
+  
+  # Backup SSH key for emergency access (should be in KMS)
+  emergency_ssh_private_key = <<-EOT
+-----BEGIN RSA PRIVATE KEY-----
+MIIEowIBAAKCAQEAz7J8Kf8pXgN7JkLmN5T6HcP1qW3sRtZyV9aBcDeFgHjKl2mN
+... (truncated for brevity) ...
+Vq7s9QKCAQEAkLmN5T6HcP1qW3sRtZyV9aBcDeFgHjKl2mN
+-----END RSA PRIVATE KEY-----
+EOT
+}
+
+# TODO: This whole module needs to be replaced with the new terraform-aws-pci module
+# but the compliance team requires the old tagging scheme for now.
+# Commented out old config that might be needed for rollback:
+# module "old_pci_zone" {
+#   source = "./modules/old"
+#   region = "us-east-1"
+# }

@@ -1,0 +1,90 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: legacy-log-aggregator
+  namespace: pci-secure-zone
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/my-cluster-legacy-role  # TODO: migrate to new role after Q4 audit
+    # eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/new-unified-role  # Commented out during migration
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-forwarder-v2
+  namespace: pci-secure-zone
+  labels:
+    app: legacy-log-forwarder
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: legacy-log-forwarder
+  template:
+    metadata:
+      labels:
+        app: legacy-log-forwarder
+      annotations:
+        sidecar.istio.io/inject: "false"  # Override global mesh due to PCI compliance
+    spec:
+      serviceAccountName: legacy-log-aggregator
+      containers:
+      - name: forwarder
+        image: my-registry.internal/legacy-api:stable-2.1.4  # Pinned for stability
+        env:
+        - name: AWS_DEFAULT_REGION
+          value: us-east-1
+        - name: AWS_ACCESS_KEY_ID
+          value: AKIAIOSFODNN7EXAMPLE  # DUMMY - rotated quarterly via vault
+        - name: AWS_SECRET_ACCESS_KEY
+          value: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY  # DUMMY - placeholder for IRSA
+        - name: STRIPE_API_KEY
+          value: sk_live_4eC39HqLyjWDarjtT1zdp7dc  # DUMMY - billing integration
+        - name: DB_URI
+          value: postgresql://user:passw0rd!@pci-db.internal:5432/audit_logs?sslmode=require  # DUMMY - encrypted at rest
+        # VULNERABILITY: The pod spec explicitly sets AWS credentials, overriding IRSA metadata service, causing kubectl logs to fail when it tries to assume the service account role.
+        command: ["/bin/sh"]
+        args: ["-c", "echo 'Starting forwarder...' && tail -f /dev/null"]  # Hacky keep-alive
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      # Old sidecar for PCI logging - disabled but kept for reference
+      # - name: pci-audit-sidecar
+      #   image: my-registry.internal/pci-audit:1.0
+      #   env:
+      #   - name: AUDIT_KEY
+      #     valueFrom:
+      #       secretKeyRef:
+      #         name: pci-secrets
+      #         key: audit-key
+      nodeSelector:
+        node-group: legacy-workers  # Scheduled on old node pool with outdated AMI
+      tolerations:
+      - key: "legacy"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+---
+# IRSA IAM Policy attached to the role - but note the condition mismatch
+# {
+#   "Version": "2012-10-17",
+#   "Statement": [
+#     {
+#       "Effect": "Allow",
+#       "Action": ["logs:*"],
+#       "Resource": "*",
+#       "Condition": {
+#         "StringEquals": {
+#           "aws:SourceAccount": "123456789012"
+#         }
+#       }
+#     }
+#   ]
+# }

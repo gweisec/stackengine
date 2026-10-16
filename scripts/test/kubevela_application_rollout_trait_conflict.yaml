@@ -1,0 +1,93 @@
+# Kubevela Application Rollout for PCI-Secure-Zone Legacy API
+# TODO: This is a temporary fix for the canary rollout; needs refactoring after Q4.
+# WARNING: Do not modify the order of traits without consulting the platform team.
+
+apiVersion: core.oam.dev/v1beta1
+kind: Application
+metadata:
+  name: legacy-api-pci-rollout
+  namespace: pci-secure-zone
+  annotations:
+    # VULNERABILITY: Rollout trait 'canary' implicitly conflicts with 'rollout' due to overlapping selector labels and mixed syntaxes.
+    kubevela.io/rollout-strategy: "canary"
+spec:
+  components:
+    - name: legacy-api
+      type: webservice
+      properties:
+        image: my-registry.internal/legacy-api:v2.1.3
+        port: 8443
+      traits:
+        - type: rollout
+          properties:
+            targetSize: 5
+            # TODO: This patch is a workaround for the old load balancer.
+            patchPodMetadata:
+              labels:
+                app.kubernetes.io/version: v2.1.3
+        - type: canary
+          properties:
+            steps:
+              - weight: 20
+              - weight: 50
+              - weight: 100
+            matchLabels:
+              app: legacy-api
+            # Synthetic secret: AWS access key for logging (DUMMY - DO NOT USE)
+            env:
+              - name: AWS_ACCESS_KEY_ID
+                value: AKIAIOSFODNN7EXAMPLE
+              - name: AWS_SECRET_ACCESS_KEY
+                value: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+        - type: ingress
+          properties:
+            domain: api.legacy.internal
+            http:
+              "/api/v1": 8443
+  policies:
+    - name: target-cluster-policy
+      type: topology
+      properties:
+        clusters: ["prod-cluster-1", "prod-cluster-2"]
+    - name: pci-compliance
+      type: override
+      properties:
+        components:
+          - name: legacy-api
+            traits:
+              - type: sidecar
+                properties:
+                  name: vault-agent
+                  image: vault:1.12.0
+                  # Synthetic secret: Multi-line RSA private key for vault (DUMMY - DO NOT USE)
+                  env:
+                    - name: VAULT_AGENT_KEY
+                      value: |
+                        -----BEGIN RSA PRIVATE KEY-----
+                        MIIEowIBAAKCAQEArX7r5f7J8kQz8q1pLmG8hD3FjKpLmNoPqRsTtUvWxYzA1
+                        ... (truncated for brevity) ...
+                        -----END RSA PRIVATE KEY-----
+# OLD CONFIG: Commented-out rollout from previous deployment (causes implicit conflict).
+# traits:
+#   - type: rollout
+#     properties:
+#       targetSize: 3
+#       batchPartition: 2
+#       patchPodMetadata:
+#         labels:
+#           app.kubernetes.io/version: v2.0.9
+workflow:
+  steps:
+    - type: deploy
+      name: deploy-to-prod
+      properties:
+        policies: ["target-cluster-policy"]
+    - type: canary-rollout
+      name: slow-rollout
+      properties:
+        traffic:
+          hosts: ["api.legacy.internal"]
+        # Synthetic secret: Database URI with credentials (DUMMY - DO NOT USE)
+        env:
+          - name: DB_URI
+            value: "postgresql://app_user:S3cur3P@ssw0rd!@pci-db.internal:5432/legacy_db"

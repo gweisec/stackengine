@@ -1,0 +1,202 @@
+name: Release Multi-Platform Binaries
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version tag (e.g. v1.0.6)'
+        required: true
+        default: 'v1.0.6'
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    name: Build Linux Binaries
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Bundle In-Memory WASM
+        run: node scripts/bundle-wasm.js
+
+      - name: Compile Linux AMD64 & ARM64 Binaries
+        run: |
+          mkdir -p dist-bin
+          bun build --compile --target=bun-linux-x64 ./src/cli.ts --outfile ./dist-bin/stackengine-linux-amd64
+          bun build --compile --target=bun-linux-arm64 ./src/cli.ts --outfile ./dist-bin/stackengine-linux-arm64
+          chmod +x dist-bin/*
+
+      - name: Upload Linux Binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries-linux
+          path: dist-bin/*
+
+  build-macos:
+    name: Build macOS Binaries
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Bundle In-Memory WASM
+        run: node scripts/bundle-wasm.js
+
+      - name: Compile macOS ARM64 & AMD64 Binaries
+        run: |
+          mkdir -p dist-bin
+          bun build --compile --target=bun-darwin-arm64 ./src/cli.ts --outfile ./dist-bin/stackengine-darwin-arm64
+          bun build --compile --target=bun-darwin-x64 ./src/cli.ts --outfile ./dist-bin/stackengine-darwin-amd64
+          chmod +x dist-bin/*
+
+      - name: Upload macOS Binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries-macos
+          path: dist-bin/*
+
+  build-windows:
+    name: Build Windows Binaries
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Bundle In-Memory WASM
+        run: node scripts/bundle-wasm.js
+
+      - name: Compile Windows AMD64 Binary
+        run: |
+          mkdir dist-bin
+          bun build --compile --target=bun-windows-x64 ./src/cli.ts --outfile ./dist-bin/stackengine-windows-amd64.exe
+
+      - name: Upload Windows Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries-windows
+          path: dist-bin/*
+
+  publish-release:
+    name: Package and Publish GitHub Release
+    needs: [build-linux, build-macos, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Download all binary artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Prepare dist-bin staging directory
+        run: |
+          mkdir -p dist-bin
+          find artifacts -type f -exec mv -v {} dist-bin/ \;
+          ls -la dist-bin/
+
+      - name: Package Release Archives & Calculate Checksums
+        run: |
+          chmod +x scripts/package-release.sh
+          bash scripts/package-release.sh
+          ls -la release-assets/
+
+      - name: Create or Update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name || github.event.inputs.version }}
+          name: StackEngine ${{ github.ref_name || github.event.inputs.version }}
+          files: release-assets/*
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          body: |
+            ### 🚀 Standalone Binary Distribution
+
+            StackEngine standalone executables with zero runtime dependencies and embedded WebAssembly engine.
+
+            #### 🍺 Install via Homebrew (macOS & Linux - Recommended)
+            ```bash
+            brew tap gweisec/stackengine
+            brew install stackengine
+            ```
+
+            #### ⚡ Quick Install Script
+            ```bash
+            curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/install.sh | sh
+            ```
+
+            #### 📦 Verification
+            Verify asset integrity using SHA-256 checksums from `checksums.txt`.
+
+      - name: Update Homebrew Tap Formula
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        env:
+          TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+        run: |
+          bash scripts/generate-homebrew-formula.sh
+          if [ -n "${TAP_GITHUB_TOKEN:-}" ]; then
+            echo "🚀 Pushing updated formula to gweisec/homebrew-stackengine..."
+            git clone "https://x-access-token:${TAP_GITHUB_TOKEN}@github.com/gweisec/homebrew-stackengine.git" tap-repo
+            mkdir -p tap-repo/Formula
+            cp Formula/stackengine.rb tap-repo/Formula/stackengine.rb
+            cd tap-repo
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add Formula/stackengine.rb
+            git commit -m "chore(formula): bump stackengine to ${{ github.ref_name || github.event.inputs.version }}" || echo "No changes to commit"
+            git push origin main
+            echo "✅ Homebrew Tap updated successfully!"
+          else
+            echo "ℹ️ HOMEBREW_TAP_GITHUB_TOKEN not configured. Formula generated locally at Formula/stackengine.rb"
+          fi

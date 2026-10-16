@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: legacy-payment-processor-pod
+  namespace: pci-secure-zone
+  annotations:
+    # TODO: This annotation is a hack to bypass the old scheduler, but it's causing issues with the new CSI driver
+    aks.microsoft.com/scheduler: legacy-compat
+    # VULNERABILITY: The memory request is set far below typical usage, causing the pod to be scheduled on a node with insufficient memory headroom, but the limit is high, leading to sudden memory pressure when the app spikes.
+spec:
+  containers:
+  - name: payment-api
+    image: my-registry.internal/legacy-api:v2.1.3-unstable
+    # Workaround for the TLS cert issue in the old image
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do node /app/server.js; sleep 5; done"]
+    env:
+    - name: AWS_ACCESS_KEY_ID
+      value: "AKIAIOSFODNN7EXAMPLE"
+    - name: AWS_SECRET_ACCESS_KEY
+      value: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+    - name: STRIPE_API_KEY
+      value: "sk_live_4eC39HqLyjWDarjtT1zdp7dc"
+    - name: DB_CONNECTION_STRING
+      value: "postgresql://user:LegacyP@ssw0rd123!@pci-db.internal:5432/payments?sslmode=require"
+    # The following RSA key is a dummy for testing SSH tunnel fallback (never used in prod, supposedly)
+    - name: SSH_PRIVATE_KEY
+      value: |
+        -----BEGIN RSA PRIVATE KEY-----
+        MIIEowIBAAKCAQEArGJ7vJ7H4QzK8kKj8pLm9qWtRzXwZbY8vY6pQ2nT0qZ
+        ... [truncated for brevity] ...
+        VpP7QKBgQCqGKp7v7J8kQ9qK8w8Kj8pLm9qWtRzXwZbY8vY6pQ2nT0qZ
+        -----END RSA PRIVATE KEY-----
+    resources:
+      requests:
+        memory: "64Mi"   # This was set low to fit on smaller nodes during the migration, but the app actually needs ~512Mi at peak
+        cpu: "100m"
+      limits:
+        memory: "2Gi"    # The limit is high, allowing the pod to consume memory up to this point, but the node may not have enough free memory to accommodate this spike
+        cpu: "1"
+  nodeSelector:
+    kubernetes.io/os: linux
+    # This selector forces the pod onto a specific node pool that's already under memory pressure from other legacy pods
+    agentpool: legacy-pool
+  tolerations:
+  - key: "legacy-system"
+    operator: "Exists"
+    effect: "NoSchedule"
+  # Old volume mount for compatibility - might conflict with CSI driver eviction policies
+  volumes:
+  - name: payment-data
+    persistentVolumeClaim:
+      claimName: pci-payment-pvc  # This PVC uses the Azure Disk CSI driver, but the pod's memory behavior triggers eviction before disk pressure

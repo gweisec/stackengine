@@ -1,0 +1,115 @@
+# PCI-SECURE-ZONE: Legacy user session microservice (DO NOT MODIFY WITHOUT ARCHITECT REVIEW)
+# TODO: This whole thing is a hack to support legacy mobile clients that send 100+ cookies
+# because of that stupid marketing analytics SDK we can't sunset until Q3.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: legacy-user-session-svc
+  namespace: pci-secure-zone
+  labels:
+    app: legacy-user-session
+    tier: backend
+    managed-by: "terraform-v0.11"  # TODO: upgrade to v1.x
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: legacy-user-session
+  template:
+    metadata:
+      labels:
+        app: legacy-user-session
+    spec:
+      containers:
+      - name: session-handler
+        image: my-registry.internal/legacy-api:session-v2.1.4  # Pinned because v3 breaks everything
+        env:
+          - name: DATABASE_URL
+            value: "postgresql://app_user:Th1sIs@FakeDBP@ssw0rd!@pci-db.internal:5432/legacy_sessions?sslmode=require"
+          - name: AWS_ACCESS_KEY_ID
+            value: "AKIAIOSFODNN7EXAMPLE"
+          - name: AWS_SECRET_ACCESS_KEY
+            value: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+          - name: STRIPE_API_KEY
+            value: "sk_live_4eC39HqLyjWDarjtT1zdp7dc"
+        # VULNERABILITY: Upstream Nginx proxy buffer defaults (8k) will be exceeded by the 100+ cookie headers this service echoes back.
+        # The ingress-nginx controller inherits the default proxy_buffer_size, but our annotation only sets body buffers.
+        # The "X-Set-Cookies" header list in the response will blow past 8k.
+        command: ["/bin/sh"]
+        args:
+          - "-c"
+          - |
+            # This monstrosity reads all incoming cookies and echoes them back in a custom header for "debugging".
+            # The old mobile SDK expects this. Don't ask.
+            gunicorn --bind 0.0.0.0:8080 --workers 4 --threads 2 \
+            --access-logfile - \
+            --error-logfile - \
+            --env DEBUG=False \
+            "legacy_app:create_app()"
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      # Old sidecar for logging - commented out but kept for "reference"
+      # - name: fluentd-sidecar
+      #   image: fluent/fluentd:v1.14-1
+      #   volumeMounts:
+      #   - name: varlog
+      #     mountPath: /var/log
+      #   - name: fluentd-config
+      #     mountPath: /fluentd/etc
+      #   env:
+      #   - name: FLUENTD_CONF
+      #     value: fluent.conf
+      nodeSelector:
+        "node-role.kubernetes.io/legacy": "true"
+      tolerations:
+      - key: "legacy"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+---
+# Ingress for the service - note we only set proxy_body_buffer_size, not proxy_buffer_size for headers.
+# This was "optimized" by the platform team last year. Ticket #PROXY-445 marked as resolved.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: legacy-user-session-ingress
+  namespace: pci-secure-zone
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "20m"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"  # This only applies to the FIRST part of the response body, not headers!
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      # TODO: Investigate occasional 502s under load. Probably the load balancer.
+      more_set_headers "X-Legacy-Mode: true";
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: sessions.secure.legacy-app.internal
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: legacy-user-session-svc
+            port:
+              number: 8080

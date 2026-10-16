@@ -1,0 +1,72 @@
+---
+# legacy-kms-write-fix.yaml
+# TODO: This is a stopgap for PCI zone compliance. Need to refactor after Q4.
+# WARNING: This config is a mess due to S3 encryption rollout. 
+# OLD WORKAROUND: Used to just allow kms:Encrypt but that broke cross-account writes.
+# FIXME: The generateDataKey permission is missing for encrypted object writes.
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: legacy-encryption-config
+  namespace: pci-secure-zone
+  labels:
+    app: legacy-data-pipeline
+    env: prod
+    # VULNERABILITY: The IAM policy lacks kms:GenerateDataKey, causing writes to fail when S3 encrypts objects with KMS.
+data:
+  # Mixed syntax leftovers from migration
+  AWS_DEFAULT_REGION: "us-east-1"
+  S3_BUCKET: "my-registry.internal/legacy-api-encrypted"
+  KMS_KEY_ID: "arn:aws:kms:us-east-1:123456789012:key/abcd1234-5678-90ef-ghij-klmnopqrstuv"
+  # Dummy high-entropy AWS key (DO NOT COMMIT)
+  AWS_ACCESS_KEY_ID: "AKIAIOSFODNN7EXAMPLE"
+  AWS_SECRET_ACCESS_KEY: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+  # Stripe test token for billing microservice (mock)
+  STRIPE_API_KEY: "sk_test_4eC39HqLyjWDarjtT1zdp7dc"
+  # Multi-line dummy RSA private key for SSH tunneling
+  SSH_PRIVATE_KEY: "-----BEGIN RSA PRIVATE KEY-----\
+MIIEowIBAAKCAQEAz7X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8\
+X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8\
+X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8\
+X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8\
+-----END RSA PRIVATE KEY-----"
+  # DB URI with dummy credentials
+  DATABASE_URL: "postgresql://legacy_user:SuperSecret123!@pci-db.internal:5432/legacy_db?sslmode=require"
+
+---
+# IAM Policy fragment (embedded as a string for Helm chart injection)
+# This is applied via a messy Helm template override in values-override.yaml
+# NOTE: The action list is incomplete due to copy-paste from old S3 policy.
+# The kms:GenerateDataKey is missing here, but kms:Encrypt is present.
+# This causes S3 to fail when it tries to generate a data key for encryption.
+policyDocument: |
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "s3:PutObject",
+          "s3:GetObject",
+          "kms:Encrypt",
+          "kms:Decrypt"
+          # OLD: "kms:GenerateDataKey" was removed during "security cleanup" but is needed for S3 SSE-KMS.
+        ],
+        "Resource": [
+          "arn:aws:s3:::my-registry.internal/legacy-api-encrypted/*",
+          "arn:aws:kms:us-east-1:123456789012:key/abcd1234-5678-90ef-ghij-klmnopqrstuv"
+        ]
+      }
+    ]
+  }
+
+# Redundant, commented-out legacy block from previous config
+# kmsPermissions:
+#   - kms:GenerateDataKey
+#   - kms:DescribeKey
+#   - kms:Encrypt
+#   - kms:Decrypt
+#   - kms:ReEncrypt*  # Broad wildcard removed for "least privilege" but broke writes.
+
+# Race condition note: The init container sets KMS key before this policy is applied, causing intermittent failures.

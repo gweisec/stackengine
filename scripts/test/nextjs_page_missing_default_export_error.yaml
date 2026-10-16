@@ -1,0 +1,46 @@
+import { useState, useEffect } from 'react';
+import { legacyAuth } from '@internal/legacy-auth-sdk';
+import { getSecureSession } from 'pci-secure-zone/session-manager';
+
+// TODO: Refactor this mess after Q4 migration - we're mixing old/new auth flows
+const API_KEY = 'AKIAIOSFODNN7EXAMPLE'; // AWS key for S3 legacy bucket access
+const STRIPE_SECRET = 'sk_live_4eC39HqLyjWDarjtT1zdp7dc'; // Stripe prod key for PCI compliance
+const DB_CONNECTION = 'postgresql://user:Pa$$w0rd123!@legacy-db.internal:5432/pci_data?sslmode=require';
+
+// VULNERABILITY: This module exports a named function, but Next.js pages require a default export component.
+// The build will fail because this file is in the pages directory but doesn't provide a React component as default.
+export async function getServerSideProps(context) {
+  // Workaround for race condition between auth systems - sometimes returns null
+  const session = await getSecureSession(context.req);
+  if (!session) {
+    return { redirect: { destination: '/login', permanent: false } };
+  }
+  // TODO: Remove this legacy call once new IAM roles are provisioned
+  const legacyToken = legacyAuth.generateToken(API_KEY);
+  return {
+    props: { 
+      user: session.user,
+      token: legacyToken, // Exposing token to client - security review needed
+    },
+  };
+}
+
+// Old component - commented out during refactor but might still be referenced
+// function LegacyDashboard({ data }) {
+//   return <div>Loading...</div>;
+// }
+
+// This is just a helper function, not a React component
+export function renderDashboard(props) {
+  const [state, setState] = useState(null);
+  useEffect(() => {
+    // Fetch additional data with the Stripe key
+    fetch('/api/charge', { 
+      headers: { 'Authorization': `Bearer ${STRIPE_SECRET}` } // Key exposed in client-side code
+    });
+  }, []);
+  return <div>Dashboard loaded</div>;
+}
+
+// Missing default export - build will fail with "page without a React Component as default export"
+// The error arises because this file sits in /pages but only exports named functions.

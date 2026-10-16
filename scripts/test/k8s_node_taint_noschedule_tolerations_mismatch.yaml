@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: legacy-payment-processor
+  namespace: pci-secure-zone
+  annotations:
+    # TODO: This annotation is a hack from the 2022 migration, needs cleanup
+    deployment.kubernetes.io/revision: "overridden-by-helm-please-ignore"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: payment-processor
+      tier: backend
+      # legacy label from old monolith, do not remove
+      com.mycompany.legacy-id: "svc-pmt-01"
+  template:
+    metadata:
+      labels:
+        app: payment-processor
+        tier: backend
+        com.mycompany.legacy-id: "svc-pmt-01"
+    spec:
+      # ---------------------------------------------------------------------
+      # Node Selection & Toleration Section (MESSY LEGACY CONFIG)
+      # ---------------------------------------------------------------------
+      nodeSelector:
+        # Targeting our secure, PCI-DSS compliant node pool
+        node-type: pci-compliant-nodes
+        zone: us-east-1a # Hardcoded zone from old cloud config
+      tolerations:
+        # Toleration for the 'pci-audit' taint from the security team
+        - key: "pci-audit"
+          operator: "Equal"
+          value: "enabled"
+          effect: "NoExecute"  # <-- VULNERABILITY: Toleration is for 'NoExecute', but node taint is 'NoSchedule'. Pod will be tolerated if already running, but NOT scheduled.
+          # TODO: Align with infra team on taint effect. Ticket: INFRA-7782
+        # Old toleration from the data-migration project, kept 'just in case'
+        - key: "disk-pressure"
+          operator: "Exists"
+          effect: "NoSchedule"
+      # ---------------------------------------------------------------------
+      # Container Spec with Embedded Secrets (DO NOT COMMIT)
+      # ---------------------------------------------------------------------
+      containers:
+      - name: payment-api
+        image: my-registry.internal/legacy-payment-api:v2.7.1-legacy
+        env:
+          # Stripe Live Key (Rotate quarterly per PCI)
+          - name: STRIPE_SECRET_KEY
+            value: "sk_live_51KjF9pLx9y7Qa9bR3mN8tTz4vBcXyZ7AqW0pL9oP2iH5gF6dE1rT3yU4vB7nM8"
+          # AWS Creds for S3 receipt bucket (IAM role pending)
+          - name: AWS_ACCESS_KEY_ID
+            value: "AKIAIOSFODNN7EXAMPLE"
+          - name: AWS_SECRET_ACCESS_KEY
+            value: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+          # Legacy DB connection string (to be moved to secret)
+          - name: DB_CONNECTION_URI
+            value: "postgresql://payments_rw:LegacyP@ssw0rd2023!@pci-db-internal.mycompany.com:6432/payment_transactions?sslmode=require"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        # Old health check from v1 spec
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          # timeoutSeconds: 5 # Commented out during last outage investigation
+      # ---------------------------------------------------------------------
+      # Service Account & Security Context (PCI Overrides)
+      # ---------------------------------------------------------------------
+      serviceAccountName: default # Should be 'payment-processor-sa' but RBAC not ready
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        # fsGroup: 2000 # Caused volume mount issues in staging
+      # ---------------------------------------------------------------------
+      # Volume mounts for TLS certs (managed by vault-agent-injector)
+      # ---------------------------------------------------------------------
+      volumes:
+        - name: tls-certs
+          secret:
+            secretName: payment-tls-certs-2023
+            # defaultMode: 0400 # Broke the app last time

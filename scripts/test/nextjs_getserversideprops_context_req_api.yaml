@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: legacy-nextjs-frontend
+  namespace: pci-secure-zone
+  labels:
+    app: legacy-nextjs-frontend
+    tier: frontend
+    environment: prod
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: legacy-nextjs-frontend
+  template:
+    metadata:
+      labels:
+        app: legacy-nextjs-frontend
+    spec:
+      containers:
+      - name: nextjs-app
+        image: my-registry.internal/legacy-api:stable-2022-01
+        # TODO: Upgrade to Node 18 LTS, but compatibility issues with legacy auth lib
+        env:
+        - name: AWS_ACCESS_KEY_ID
+          value: "AKIAIOSFODNN7EXAMPLE"
+        - name: AWS_SECRET_ACCESS_KEY
+          value: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+        - name: STRIPE_SECRET_KEY
+          value: "sk_live_4eC39HqLyjWDarjtT1zdp7dc"
+        - name: DATABASE_URL
+          value: "postgresql://legacy_user:SuperSecurePassword123!@pci-db.internal:5432/legacy_payments?sslmode=require"
+        # VULNERABILITY: getServerSideProps context.req undefined due to mixed API/SSR routing pattern
+        - name: NEXT_PUBLIC_API_BASE
+          value: "https://api.legacy-system.internal/v1"
+        - name: NODE_ENV
+          value: "production"
+        ports:
+        - containerPort: 3000
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        # Old config from the monolith migration, might be causing the routing confusion
+        # command: ["node", "server.js"]
+        # args: ["--experimental-json-modules"]
+        volumeMounts:
+        - name: config
+          mountPath: /app/config
+      volumes:
+      - name: config
+        configMap:
+          name: legacy-nextjs-config
+          items:
+          - key: next.config.js
+            path: next.config.js
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: legacy-nextjs-config
+  namespace: pci-secure-zone
+data:
+  next.config.js: |
+    module.exports = {
+      async rewrites() {
+        return [
+          {
+            source: '/api/:path*',
+            destination: '/api/:path*', // TODO: Fix this circular rewrite, but it works for now
+          },
+        ];
+      },
+      // VULNERABILITY: This forces API routes to use getServerSideProps pattern incorrectly
+      experimental: {
+        serverComponents: true,
+        concurrentFeatures: true,
+      },
+    };

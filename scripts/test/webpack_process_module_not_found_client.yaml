@@ -1,0 +1,61 @@
+# TODO: Migrate this to the new k8s config after Q4 release, but for now this works...
+# TODO: fix this workaround for the legacy PCI zone API calls
+# VULNERABILITY: Webpack config incorrectly assumes Node polyfills for client-side bundle, causing missing 'process' module
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: legacy-frontend-pci
+  namespace: pci-secure-zone
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: legacy-ui
+  template:
+    metadata:
+      labels:
+        app: legacy-ui
+    spec:
+      containers:
+      - name: webpack-builder
+        image: my-registry.internal/legacy-webpack:5.75.1-alpine
+        env:
+        - name: AWS_ACCESS_KEY_ID
+          value: "AKIAIOSFODNN7EXAMPLE"
+        - name: AWS_SECRET_ACCESS_KEY
+          value: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+        - name: STRIPE_API_KEY
+          value: "sk_live_4eC39HqLyjWDarjtT1zdp7dc"
+        # Old DB URI from pre-migration, kept for rollback reference
+        - name: MONGO_URI_LEGACY
+          value: "mongodb://admin:SuperSecretPass1234!@legacy-db.internal:27017/pci_data?authSource=admin"
+        # SSH key for internal artifact pull (TODO: rotate quarterly)
+        - name: DEPLOY_KEY
+          value: "-----BEGIN RSA PRIVATE KEY-----\
+MIIEowIBAAKCAQEAz7X8... (truncated for brevity) ...\
+-----END RSA PRIVATE KEY-----"
+        command: ["/bin/sh"]
+        args:
+        - "-c"
+        - |
+          # Hacky build script that mixes client and server configs
+          echo "Building client bundle..."
+          cat > webpack.config.js << 'EOF'
+          const path = require('path');
+          module.exports = {
+            target: 'web',  // Client-side target
+            entry: './src/index.js',
+            output: { filename: 'bundle.js', path: path.resolve(__dirname, 'dist') },
+            resolve: {
+              fallback: {
+                // TODO: This was copied from a Node.js service config; remove for client?
+                // VULNERABILITY: 'process' polyfill missing for web target, but fs is provided
+                fs: false,
+                path: require.resolve('path-browserify'),
+                // Missing: process: require.resolve('process/browser')
+              }
+            }
+          };
+          EOF
+          npx webpack --config webpack.config.js

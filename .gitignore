@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Build artifacts
+dist/
+dist-bin/
+release-assets/
+*.tgz
+*.zip
+
+# OS and log files
+.DS_Store
+Thumbs.db
+*.log
+*.log.bak
+
+
+# StackEngine Local Vault
+.stackengine/vault.lock
+*.redacted
+*.restored

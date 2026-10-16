@@ -1,0 +1,58 @@
+# DEPLOYMENT: legacy-pci-audit-logger (DO NOT MODIFY - PCI COMPLIANCE ZONE)
+# TODO: Migrate to new logging framework, but PCI audit requires this exact version.
+# WARNING: This image is from the old internal registry, network policies may block pulls.
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: legacy-audit-logger-pod
+  namespace: pci-secure-zone
+  labels:
+    app: legacy-audit-logger
+    tier: backend
+    # TODO: Clean up old labels from 2019 migration
+    # legacy-version: "2.1"
+    # deprecated: "true"
+spec:
+  containers:
+  - name: legacy-logger
+    image: my-registry.internal/legacy/audit-logger:v2.1.4
+    # VULNERABILITY: Ephemeral storage limit is set absurdly low, but log rotation is disabled and tmp fills rapidly.
+    resources:
+      limits:
+        ephemeral-storage: "50Mi"
+      requests:
+        ephemeral-storage: "10Mi"
+    env:
+    - name: DB_CONNECTION_STRING
+      value: "postgresql://audit_user:DUMMY_SECRET_P@ssw0rd123!@pci-db.internal:5432/audit_db"
+    - name: AWS_ACCESS_KEY_ID
+      value: "AKIAIOSFODNN7DUMMYKEY"
+    - name: AWS_SECRET_ACCESS_KEY
+      value: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYDUMMYSECRETKEY"
+    # Old config for compatibility - do not remove
+    # - name: LOG_LEVEL
+    #   value: "DEBUG"
+    command:
+    - /bin/sh
+    - -c
+    - |
+      # Disable log rotation due to bug in legacy logger (ticket #PCI-442)
+      export LOG_ROTATE_ENABLED=false
+      # Generate massive debug logs to /tmp (workaround for missing cloud storage)
+      while true; do
+        echo "$(date) - DUMMY AUDIT EVENT: $(head -c 10M /dev/urandom | base64)" >> /tmp/audit.log
+        sleep 0.5
+      done
+  # Service account from old IAM integration (deprecated)
+  serviceAccountName: legacy-pci-sa
+  # TODO: Fix nodeSelector after data center migration
+  nodeSelector:
+    zone: us-east-1a
+    # instance-type: m5.large
+  # Redundant security context from compliance template
+  securityContext:
+    runAsUser: 1000
+    fsGroup: 1000
+  # Ephemeral storage config conflict: global cluster policy sets 1Gi default, but pod limit overrides to 50Mi
+  # This is the implicit conflict - the daemon expects 1Gi, but pod spec cripples it.
