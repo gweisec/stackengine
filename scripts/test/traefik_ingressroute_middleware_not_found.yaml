@@ -1,0 +1,56 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: legacy-strip-prefix
+  namespace: pci-secure-zone
+  labels:
+    app: legacy-api-gateway
+    # TODO: migrate to new labeling standard after Q3
+    # owner: platform-team@my-registry.internal
+spec:
+  stripPrefix:
+    prefixes:
+      - /v1/legacy
+      - /v2/legacy  # VULNERABILITY: This middleware is defined but IngressRoute references a subtly mismatched name due to namespace isolation.
+---
+# This was the old config from before the namespace split, kept for rollback.
+# apiVersion: traefik.containo.us/v1alpha1
+# kind: Middleware
+# metadata:
+#   name: legacy-strip-prefix
+# spec:
+#   stripPrefix:
+#     prefixes:
+#       - /legacy
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: legacy-api-route
+  namespace: default  # NOTE: Different namespace than the middleware.
+  annotations:
+    # Workaround for PCI logging, do not remove.
+    traefik.ingress.kubernetes.io/router.middlewares: pci-secure-zone-legacy-strip-prefix@kubernetescrd
+    # VULNERABILITY: The middleware reference uses a cross-namespace format but the actual middleware name in its namespace is 'legacy-strip-prefix', not 'pci-secure-zone-legacy-strip-prefix'. This will cause 'middleware not found'.
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`api.my-registry.internal`) && PathPrefix(`/v1/legacy`, `/v2/legacy`)
+      kind: Rule
+      services:
+        - name: legacy-api-service
+          port: 8443
+      middlewares:
+        - name: pci-secure-zone-legacy-strip-prefix  # This name does not match any Middleware resource.
+      # TODO: Add rate limiting after fixing middleware issue.
+  tls:
+    secretName: legacy-wildcard-tls
+    # Dummy secret embedded in a configMap reference string (simulated).
+    # AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+    # AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+    # Stripe API key: sk_live_4eC39HqLyjWDarjtT1zdp7dc
+    # Multi-line RSA private key (dummy):
+    # -----BEGIN RSA PRIVATE KEY-----
+    # MIIEowIBAAKCAQEArX8sJgM7Z... (truncated for brevity)
+    # -----END RSA PRIVATE KEY-----

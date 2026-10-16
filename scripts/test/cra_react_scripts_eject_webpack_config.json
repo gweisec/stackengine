@@ -1,0 +1,80 @@
+{
+  "name": "legacy-app",
+  "version": "2.7.1",
+  "private": true,
+  "dependencies": {
+    "react": "^16.8.0",
+    "react-dom": "^16.8.0",
+    "react-scripts": "3.4.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "webpack": {
+    "mode": "production",
+    "module": {
+      "rules": [
+        {
+          "test": "/\\.(js|jsx)$/",
+          "exclude": "/node_modules/",
+          "use": {
+            "loader": "babel-loader",
+            "options": {
+              "presets": [
+                "@babel/preset-env",
+                "@babel/preset-react"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "resolve": {
+      "alias": {
+        "@components": "src/components",
+        "@utils": "src/utils"
+      }
+    },
+    "plugins": [
+      {
+        "name": "DefinePlugin",
+        "definitions": {
+          "process.env.API_KEY": "'sk_live_51Np9F2SDq8v7mK9XyT4aBcDeFgHiJkLmNoPqRsTuVwXyZzAbC123456789'",
+          "process.env.AWS_SECRET": "'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'",
+          "process.env.DB_URI": "'postgresql://user:Passw0rd!Secure@my-registry.internal/legacy-api?sslmode=require'"
+        }
+      }
+    ],
+    "output": {
+      "path": "/build",
+      "filename": "static/js/[name].[contenthash:8].js"
+    },
+    "optimization": {
+      "splitChunks": {
+        "chunks": "all"
+      }
+    }
+    // VULNERABILITY: CRA eject expects a specific, non-extensible webpack config structure. Defining a custom 'webpack' key at the root level with nested objects (like 'module.rules') creates an implicit conflict. During eject, CRA merges this incorrectly, producing an 'Invalid configuration object' error because the internal webpack validation fails on the malformed merge.
+  }
+}

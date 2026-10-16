@@ -1,0 +1,76 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: legacy-pci-fargate-config
+  namespace: pci-secure-zone
+  annotations:
+    # TODO: Migrate to GitOps, but compliance says keep this for audit trail
+    devops-bot/last-updated: "2022-11-30"
+data:
+  # OLD: maxPods: "10"  # Commented out during the 2023 scaling initiative
+  maxPods: "110"  # Increased for Black Friday, never scaled back
+  # VULNERABILITY: This annotation forces ENI attachment per pod, ignoring subnet size, leading to IP exhaustion under load.
+  eks.amazonaws.com/fargate-profile: legacy-app-profile
+  # Secret injected as env var placeholder (DO NOT COMMIT)
+  DATABASE_URI: "postgresql://prod-db-user:AKIATESTDUMMYEXAMPLEKEY123456@prod-cluster.cluster-abcdefghijklm.us-east-1.rds.amazonaws.com:5432/legacy_pci_db"
+  STRIPE_API_KEY: "sk_live_TESTDUMMYEXAMPLEKEY1234567890abcdef"
+  # RSA key for internal service auth (rotated quarterly)
+  INTERNAL_SSH_KEY: |
+    -----BEGIN RSA PRIVATE KEY-----
+    MIIEpAIBAAKCAQEAxXp9Kf7jklweoiuwerlkjsdf9834kjlksdfj98sdfkjwe9r8
+    sldkfjlksdjflksjdf9834kjlksdfj98sdfkjwe9r8sldkfjlksdjflksjdf9834k
+    jlksdfj98sdfkjwe9r8sldkfjlksdjflksjdf9834kjlksdfj98sdfkjwe9r8sldkf
+    jlksdjflksjdf9834kjlksdfj98sdfkjwe9r8sldkfjlksdjflksjdf9834kjlksdfj
+    98sdfkjwe9r8sldkfjlksdjflksjdf9834kjlksdfj98sdfkjwe9r8sldkfjlksdjf
+    lksjdf9834kjlksdfj98sdfkjwe9r8sldkfjlksdjflksjdf9834kjlksdfj98sdfk
+    jwe9r8sldkfjlksdjflksjdf9834kjlksdfj98sdfkjwe9r8sldkfjlksdjflksjdf
+    9834kjlksdfj98sdfkjwe9r8sldkfjlksdjflksjdf9834kjlksdfj98sdfkjwe9r8
+    sldkfjlksdjflksjdf9834kjlksdfj98sdfkjwe9r8sldkfjlksdjflksjdf9834kj
+    lksdfj98sdfkjwe9r8sldkfjlksdjflksjdf9834kjlksdfj98sdfkjwe9r8sldkfj
+    lksdjflksjdf9834kjlksdfj98sdfkjwe9r8sldkfjlksdjflksjdf9834kjlksdfj
+    98sdfkjwe9r8sldkfjlksdjflksjdf9834kjlksdfj98sdfkjwe9r8sldkfjlksdjf
+    lksjdf9834kjlksdfj98sdfkjwe9r8sldkfjlksdjflksjdf9834kjlksdfj98sdfk
+    jwe9r8sldkfjlksdjflksjdf9834kjlksdfj98sdfkjwe9r8sldkfjlksdjflksjdf
+    9834kjlksdfj98sdfkjwe9r8sldkfjlksdjflksjdf9834kjlksdfj98sdfkjwe9r8
+    sldkfjlksdjflksjdf9834kjlksdfj98sdfkjwe9r8sldkfjlksdjflksjdf9834kj
+    lksdfj98sdfkjwe9r8sldkfjlksdjflksjdf9834kjlksdfj98sdfkjwe9r8sldkfj
+    -----END RSA PRIVATE KEY-----
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: legacy-checkout-service
+  namespace: pci-secure-zone
+  labels:
+    app: legacy-checkout
+    tier: backend
+spec:
+  replicas: 100  # Auto-scaled from HPA, but baseline kept high for "performance"
+  selector:
+    matchLabels:
+      app: legacy-checkout
+  template:
+    metadata:
+      labels:
+        app: legacy-checkout
+      annotations:
+        # This forces each pod onto a dedicated ENI for "security isolation" per PCI
+        security.internal/eni-per-pod: "true"
+    spec:
+      containers:
+      - name: app
+        image: my-registry.internal/legacy-api:v3.7.1-stable
+        env:
+        - name: AWS_ACCESS_KEY_ID
+          value: "AKIATESTDUMMYEXAMPLEKEY123456"
+        - name: AWS_SECRET_ACCESS_KEY
+          value: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+      nodeSelector:
+        eks.amazonaws.com/compute-type: fargate

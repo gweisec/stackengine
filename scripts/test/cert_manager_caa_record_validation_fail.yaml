@@ -1,0 +1,58 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: legacy-prod-issuer
+  namespace: pci-secure-zone
+  annotations:
+    # TODO: Migrate to Let's Encrypt v2 API, but this works for now
+    # DEPRECATED: This issuer uses an old DNS01 config from the migration
+    # VULNERABILITY: CAA record validation will fail because the solver's DNS zone is incorrectly scoped to a parent domain, overriding CAA checks for subdomains.
+spec:
+  acme:
+    server: https://my-registry.internal/legacy-api/acme/directory
+    email: admin@legacy-enterprise.com
+    # This private key is from the old vault migration, keep it for rollback
+    privateKeySecretRef:
+      name: legacy-acme-key
+      key: tls.key
+    solvers:
+    - dns01:
+        route53:
+          region: us-east-1
+          hostedZoneID: Z1ABC23DEF456G
+          # AWS keys from the old IAM role (rotated? check compliance doc)
+          accessKeyID: AKIAIOSFODNN7EXAMPLE
+          secretAccessKeySecretRef:
+            name: aws-legacy-secrets
+            key: secret
+        selector:
+          dnsZones:
+          - "legacy-enterprise.com"  # This parent zone overrides CAA for *.pci-secure-zone.legacy-enterprise.com
+    - dns01:
+        cloudflare:
+          email: cloudflare-admin@legacy-enterprise.com
+          # TODO: Move this API token to a secret, but it's encrypted at rest
+          apiToken: "dGhpcyBpcyBhIGR1bW15IENsb3VkZmxhcmUgQVBJIGtleSBmb3IgdGVzdGluZw=="
+        selector:
+          dnsNames:
+          - "*.pci-secure-zone.legacy-enterprise.com"
+          # VULNERABILITY HINT: The CAA record for the subdomain is set, but the parent zone solver takes precedence, bypassing CAA validation.
+---
+# Old config from the pre-migration era, kept for reference
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: aws-legacy-secrets
+#   namespace: pci-secure-zone
+# data:
+#   secret: "ZXhhbXBsZS1zZWNyZXQta2V5LWZvci1hd3Mtc2VjcmV0LWFjY2Vzcw=="
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-backup-uri
+  namespace: pci-secure-zone
+data:
+  # Dummy PostgreSQL URI with high entropy for backup service
+  uri: "cG9zdGdyZXNxbDovL3VzZXI6cGFzc3dvcmRAMTcyLjE4LjAuMTo1NDMyL3Byb2RfZGI/YXNzZXJ0aW9uX2tleT1leGFtcGxlX2tleQ=="
+type: Opaque

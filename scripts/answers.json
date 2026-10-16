@@ -1,0 +1,1257 @@
+{
+  "aks_node_info_scale_up_failure.yaml": {
+    "name": "aks_node_info_scale_up_failure.yaml",
+    "count": 4,
+    "secrets": [
+      "AKIAR2V5YEXAMPLEKEY12345",
+      "sk_live_51Np9j2EXAMPLE9876543210abcdef",
+      "AKIAIOSFODNN7EXAMPLE",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArXJ7EXAMPLEKEYDATAHERE1234567890abcdefghijklmnopqrstuvwxyz\n... (truncated for brevity) ...\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "aks_nodepressure_azure_disk_csi_eviction.yaml": {
+    "name": "aks_nodepressure_azure_disk_csi_eviction.yaml",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "LegacyP@ssw0rd123!",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArGJ7vJ7H4QzK8kKj8pLm9qWtRzXwZbY8vY6pQ2nT0qZ\n... [truncated for brevity] ...\nVpP7QKBgQCqGKp7v7J8kQ9qK8w8Kj8pLm9qWtRzXwZbY8vY6pQ2nT0qZ\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "api_server_x509_certificate_expired.yaml": {
+    "name": "api_server_x509_certificate_expired.yaml",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_test_4eC39HqLyjWDarjtT1zdp7dc",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArX8zwyK6lCxg9wL6YJ1Vp7wK1p2qYzA7KfJz8QnqYwQ7X8z\n... (truncated for brevity) ...\n-----END RSA PRIVATE KEY-----",
+      "SuperSecret123!"
+    ]
+  },
+  "argo_rollouts_analysis_canary_metric_error.yaml": {
+    "name": "argo_rollouts_analysis_canary_metric_error.yaml",
+    "count": 5,
+    "secrets": [
+      "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecretPass123!"
+    ]
+  },
+  "argocd_sync_gitops_ssh_key_unknown.yaml": {
+    "name": "argocd_sync_gitops_ssh_key_unknown.yaml",
+    "count": 5,
+    "secrets": [
+      "-----BEGIN OPENSSH PRIVATE KEY-----\n    b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABlwAAAAdzc2gtcn\n    NhAAAAAwEAAQAAAYEAvY7LkHkqR7TZJ8N9Kp8pLmMx9fGz8qWpQaAaBcD1sR2pQ2nJ8q2\n    ... (fake high-entropy key data) ...\n    qXJ5c2lzCg==\n    -----END OPENSSH PRIVATE KEY-----",
+      "LegacyP@ssw0rd2023!",
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_51NfL2pKJ8qLmMx9fGz8qWpQaAaBcD1sR2pQ2nJ8q2XJ5c"
+    ]
+  },
+  "aws_api_gateway_lambda_invoke_permission.yaml": {
+    "name": "aws_api_gateway_lambda_invoke_permission.yaml",
+    "count": 5,
+    "secrets": [
+      "sk_live_51KjHp2LmZv8dR9Xy4AaBcDeFgHiJkLmNoPqRsTuVwXyZz1234567890AbC",
+      "Pa$$w0rd!Secur3",
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArXJ7wq9mL1zKjHhT8vN1sXpLmNoPqRsTuVwXyZzAbCdEfGhIj\nKlMnO pQrStUvWxYzAbCdEfGhIjKlMnOpQrStUvWxYz... (truncated for brevity)\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "aws_cli_v2_assumerole_token_expired.yaml": {
+    "name": "aws_cli_v2_assumerole_token_expired.yaml",
+    "count": 4,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "V3ryS3cur3P@ssw0rd123!"
+    ]
+  },
+  "aws_cloudwatch_logs_route53_query_logging.sh": {
+    "name": "aws_cloudwatch_logs_route53_query_logging.sh",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "whsec_5a8f1b3c9d7e0f2a4b6c8d0e1f3a5b7c9d1e3f5a",
+      "SuperSecretPassw0rd!",
+      "-----BEGIN RSA PRIVATE KEY-----\\MIIEowIBAAKCAQEArz8tQZfFdQq7vF7kKjHq1LmNpZvG8sXyT2wVQbR5YqJtA\\... (truncated for brevity) ...\\-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "aws_iam_user_login_password_policy_denied.sh": {
+    "name": "aws_iam_user_login_password_policy_denied.sh",
+    "count": 4,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecret123!"
+    ]
+  },
+  "aws_identity_pool_auth_provider_mapping.tf": {
+    "name": "aws_identity_pool_auth_provider_mapping.tf",
+    "count": 4,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE1234",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "SuperSecretDBPass123!",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArL3Xp7K7YJkQ9vG8HjMqWpLmNtZy1sZ2FkZCBkdW1teSBrZXkg\nZm9yIHRlc3Rpbmcgb25seS4gVGhpcyBpcyBhIHN5bnRoZXRpYyBzZWNyZXQu\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "aws_kms_creategrant_grantee_principal_denied.sh": {
+    "name": "aws_kms_creategrant_grantee_principal_denied.sh",
+    "count": 5,
+    "secrets": [
+      "SuperSecretPassw0rd!",
+      "sk_test_51Np9XwFakeKey9876543210abcdefghijklm",
+      "-----BEGIN RSA PRIVATE KEY-----\\\nMIIEowIBAAKCAQEArzHc6fFakeKeyBase64DataHereForDemoPurposesOnlyNotReal\\\n-----END RSA PRIVATE KEY-----",
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+    ]
+  },
+  "aws_kms_generatedatakey_missing_encrypted_write.yaml": {
+    "name": "aws_kms_generatedatakey_missing_encrypted_write.yaml",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_test_4eC39HqLyjWDarjtT1zdp7dc",
+      "-----BEGIN RSA PRIVATE KEY-----\\MIIEowIBAAKCAQEAz7X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8\\X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8\\X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8\\X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8X8\\-----END RSA PRIVATE KEY-----",
+      "SuperSecret123!"
+    ]
+  },
+  "aws_kms_key_pending_deletion_update.tf": {
+    "name": "aws_kms_key_pending_deletion_update.tf",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "SuperSecretDBPass123!",
+      "sk_live_51HbMp2KZv6gLz8W9xYtNpOqR3sT7uVwA0bC4dF6gH8jK2lM5nP7rT9vW1yZ3x5B7",
+      "-----BEGIN RSA PRIVATE KEY-----\\nMIIEowIBAAKCAQEAnzyis1ZjfNB0bBgKFMSvvkTtwlvBsaJq7S5wA+kzeVOVpVWw\\nkWdVha4s38XM/pa/yr47av7z3VTmvDRyAHcaT92whREFpLv9cj5lTeJSibyrMr\\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "aws_kms_key_policy_decrypt_accessdenied.sh": {
+    "name": "aws_kms_key_policy_decrypt_accessdenied.sh",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecretPassword123!",
+      "-----BEGIN RSA PRIVATE KEY-----\\\nMIIEowIBAAKCAQEAz7X8X9L8X9L8X9L8X9L8X9L8X9L8X9L8X9L8X9L8X9L8X9L8X9L8X9L8\\\nX9L8X9L8X9L8X9L8X9L8X9L8X9L8X9L8X9L8X9L8X9L8X9L8X9L8X9L8X9L8X9L8X9L8\\\nX9L8X9L8X9L8X9L8X9L8X9L8X9L8X9L8X9L8X9L8X9L8X9L8X9L8X9L8X9L8X9L8X9L8\\\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "aws_s3_public_access_block_override.sh": {
+    "name": "aws_s3_public_access_block_override.sh",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE123",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecretPass123!",
+      "-----BEGIN RSA PRIVATE KEY-----\\\nMIIEowIBAAKCAQEArX7rH5pL... (truncated dummy key) \\\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "calico_bgp_peer_connection_refused.yaml": {
+    "name": "calico_bgp_peer_connection_refused.yaml",
+    "count": 4,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "SuperSecretPass123!",
+      "-----BEGIN RSA PRIVATE KEY-----\n  #   MIIEowIBAAKCAQEArL5JmE5r...[truncated for brevity]...\n  #   -----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "calico_cni_ipv6_dual_stack_ip_pool.yaml": {
+    "name": "calico_cni_ipv6_dual_stack_ip_pool.yaml",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArX8sJgJvFkHk9qQwQgL8Qc6QK8JZfK8J8Qc6QK8JZfK8J8Q\n... [truncated for brevity] ...\nV7Q8Qc6QK8JZfK8J8Qc6QK8JZfK8J8Qc6QK8JZfK8J8Qc6QK8JZfK8J8Qc6QK\n-----END RSA PRIVATE KEY-----",
+      "DUMMY_PASSWORD_123"
+    ]
+  },
+  "canal_cni_bgp_peering_down_not_ready.yaml": {
+    "name": "canal_cni_bgp_peering_down_not_ready.yaml",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "Passw0rd!",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAtX8tUq6H8vQ6g7LmK7zX7Q8nRk9LpPJxY8WvZ6T2N1JwQ\n... (truncated for brevity) ...\nqmJ7Q3Z1X8K7vR2nT5WkL9M2pPqR7S8T9U0V1W2X3Y4Z5A6B7C8D9E0F1G2H\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "cert_manager_acme_authorization_error_403.conf": {
+    "name": "cert_manager_acme_authorization_error_403.conf",
+    "count": 5,
+    "secrets": [
+      "AKIAJK3IVDEMOEXAMPLE",
+      "wJe1P3RoO4R5jKorjTxj2sd6bc7tpc1fRekM8966",
+      "QUtJQUpLM0lWREVNT0VYQU1QTEUK",
+      "d0VKZTFQM1JvTzRSNWpLb3JqVHhqMnNkNmJjN3RwYzFmUmVrTQ==",
+      "SuperSecretPassw0rd!",
+      "sk_live_51KjHp2LmQ9XyZABCdEfGhIjKlMnOpQrStUvWxYz",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAz7p6g6v7Kj8nLm5pQwX9tR2sAeBcDeFgHiJkLmNoPqRsTuVw\n... [truncated for brevity] ...\nXyZABCdEfGhIjKlMnOpQrStUvWxYz1234567890abcdef\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "coredns_dns_resolution_refused_high_load.yaml": {
+    "name": "coredns_dns_resolution_refused_high_load.yaml",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecretPass123!",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArX8bB8Y7vRqAeLmJ7K6Q5p5v5z5a5Z5v5z5a5Z5v5z5a5Z\n... (truncated for brevity) ...\nV5v5z5a5Z5v5z5a5Z5v5z5a5Z5v5z5a5Z5v5z5a5Z5v5z5a5Z5v5z5a5Z5v5z\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "coredns_nxdomain_internal_service_discovery.yaml": {
+    "name": "coredns_nxdomain_internal_service_discovery.yaml",
+    "count": 4,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_test_4eC39HqLyjWDarjtT1zdp7dc",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArX8zJNc6qQvT7KpLmFk7XqLz6aGpN9hJ8wYtHjKlNpQqWv\n... (truncated for brevity) ...\nsfdsfdsfdsfsdfdsfdsfs\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "cra_5_webpack_dev_server_invalid_config.json": {
+    "name": "cra_5_webpack_dev_server_invalid_config.json",
+    "count": 6,
+    "secrets": [
+      "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC7VJUtC... (dummy multi-line RSA key truncated)\n-----END PRIVATE KEY-----",
+      "AKIAIOSFODNN7EXAMPLE",
+      "-----BEGIN CERTIFICATE-----\\\nMIIDXTCCAkWgAwIBAgIJAKL... (dummy cert truncated)\\\n-----END CERTIFICATE-----",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "pass1234"
+    ]
+  },
+  "cra_babel_loader_experimental_decorators_fail.json": {
+    "name": "cra_babel_loader_experimental_decorators_fail.json",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "pass",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArGzJ7vVMWvJ9N8\n... (truncated for brevity) ...\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "cra_react_scripts_build_monorepo_hang.dockerfile": {
+    "name": "cra_react_scripts_build_monorepo_hang.dockerfile",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "-----BEGIN RSA PRIVATE KEY-----\\\nMIIEowIBAAKCAQEArGJ7vJ1pJxH9z8QaXqLp7N4K\\\n... (truncated for brevity) ...\\\n-----END RSA PRIVATE KEY-----",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_test_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecret123!"
+    ]
+  },
+  "cra_react_scripts_eject_webpack_config.json": {
+    "name": "cra_react_scripts_eject_webpack_config.json",
+    "count": 3,
+    "secrets": [
+      "sk_live_51Np9F2SDq8v7mK9XyT4aBcDeFgHiJkLmNoPqRsTuVwXyZzAbC123456789",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "Passw0rd!Secure"
+    ]
+  },
+  "cronjob_namespace_resource_quota_exceeded.yaml": {
+    "name": "cronjob_namespace_resource_quota_exceeded.yaml",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecretPass123!",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArGJ7PcVhJqNvLmQqKjHnBmKpLwYtZxRvQ2pM8n7JkLmT6Xy\n... [truncated for brevity] ...\nZ1cL7pPv5w2qN8XqY7WzH5QKXvG8JdFqR2sT9uMlO0pPqY3Wx5ZvL8JkLmT6Xy\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "crossplane_composite_resource_xrd_schema_violation.yaml": {
+    "name": "crossplane_composite_resource_xrd_schema_violation.yaml",
+    "count": 3,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "-----BEGIN RSA PRIVATE KEY-----\n                      MIIEowIBAAKCAQEArX8zC2FQdNlQzK6jX7KpLm8vA9ZqWwT0oG7nHrKjYvLm\n                      ... (truncated for brevity) ...\n                      -----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "daemonset_termination_grace_period_force_delete.yaml": {
+    "name": "daemonset_termination_grace_period_force_delete.yaml",
+    "count": 4,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecret123!"
+    ]
+  },
+  "docker0_bridge_ip_conflict_host.yaml": {
+    "name": "docker0_bridge_ip_conflict_host.yaml",
+    "count": 5,
+    "secrets": [
+      "SuperSecretDBP@ssw0rd123",
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBS0NBUUVBMEV3cDFPcjZ6LzFvS2pIYzJ4OXZxTDduT3F2THdZOHBac1Z2TG04S2pIcVQKa2pIYzJ4OXZxTDduT3F2THdZOHBac1Z2TG04S2pIcVQxMmszNDU2Nzg5MGFiY2RlZmdoaWprbG1ub3BxcnN0CnV2d3h5ejEyMzQ1Njc4OTBhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ejEyMzQ1Njc4OTBhYmNkZWZnaGlqCmtsbW5vcHFyc3R1dnd4eXoxMjM0NTY3ODkwYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY3ODkwCmFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6MTIzNDU2Nzg5MGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6CjEyMzQ1Njc4OTBhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ejEyMzQ1Njc4OTBhYmNkZWZnaGlqa2xtbm9wCnFyc3R1dnd4eXoxMjM0NTY3ODkwYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY3ODkwYWJjZGVmCmdoaWprbG1ub3BxcnN0dXZ3eHl6LS0tLS1FTkQgUlNBIFBSSVZBVEUgS0VZLS0tLS0K"
+    ]
+  },
+  "docker0_mtu_mismatch_packet_drop.yaml": {
+    "name": "docker0_mtu_mismatch_packet_drop.yaml",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecret123!",
+      "-----BEGIN RSA PRIVATE KEY-----\\MIIEowIBAAKCAQEArGJ7... (truncated for brevity) \\-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "docker_apt_get_hash_sum_mismatch.dockerfile": {
+    "name": "docker_apt_get_hash_sum_mismatch.dockerfile",
+    "count": 4,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "5up3rS3cr3tP@ss",
+      "-----BEGIN RSA PRIVATE KEY-----\\nMIIEowIBAAKCAQEArX7r\\nEXAMPLEKEYCONTENT\\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "docker_build_context_too_large_dockerignore.dockerfile": {
+    "name": "docker_build_context_too_large_dockerignore.dockerfile",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "-----BEGIN RSA PRIVATE KEY-----\\\nMIIEowIBAAKCAQEArX7rI7vQz9XaXw7X8ZtJfK8lM2nBvP3qA2sW5dGfHjKl\\\nYtUvBmRcFwLpNqRtSvLmKjHnQwZrT8sKvX7rI7vQz9XaXw7X8ZtJfK8lM2n\\\nBvP3qA2sW5dGfHjKlYtUvBmRcFwLpNqRtSvLmKjHnQwZrT8sKvX7rI7vQz9\\\nXaXw7X8ZtJfK8lM2nBvP3qA2sW5dGfHjKlYtUvBmRcFwLpNqRtSvLmKjHnQ\\\nwZrT8sKvX7rI7vQz9XaXw7X8ZtJfK8lM2nBvP3qA2sW5dGfHjKlYtUvBmRc\\\n-----END RSA PRIVATE KEY-----",
+      "SuperSecretPass123!"
+    ]
+  },
+  "docker_build_frontend_v0_llb_definition.dockerfile": {
+    "name": "docker_build_frontend_v0_llb_definition.dockerfile",
+    "count": 6,
+    "secrets": [
+      "postgresql://prod-user:SuperSecret123!@pci-db.internal:5432/transactions",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArzJ9gqVlA8s7XkLzKtHjWpPqM8nYt6vBhGcXwq1AaBmDf3p\nqRSTNxvL8kQwY2JhZGVkIGR1bW15IGtleSBmb3IgdGVzdGluZyBvbmx5\n-----END RSA PRIVATE KEY-----",
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "P@ssw0rd!2023"
+    ]
+  },
+  "docker_build_overlay2_no_space_left.sh": {
+    "name": "docker_build_overlay2_no_space_left.sh",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecretPass123!",
+      "-----BEGIN RSA PRIVATE KEY-----\\\nMIIEowIBAAKCAQEAtX8tJz7KkLm8N9v6X8ZqJQ7bTexamplekeydataheremoreandmore\\\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "docker_buildx_platform_linux_amd64_qemu.dockerfile": {
+    "name": "docker_buildx_platform_linux_amd64_qemu.dockerfile",
+    "count": 4,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecretPass123!"
+    ]
+  },
+  "docker_cp_unexpected_eof_remote_daemon.sh": {
+    "name": "docker_cp_unexpected_eof_remote_daemon.sh",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAtX8lC7cK7X8lC7cK7X8lC7cK7X8lC7cK7X8lC7cK7X8lC7cK7X8l\nC7cK7X8lC7cK7X8lC7cK7X8lC7cK7X8lC7cK7X8lC7cK7X8lC7cK7X8lC7cK7X8lC7c\nK7X8lC7cK7X8lC7cK7X8lC7cK7X8lC7cK7X8lC7cK7X8lC7cK7X8lC7cK7X8lC7cK7X\n8lC7cK7X8lC7cK7X8lC7cK7X8lC7cK7X8lC7cK7X8lC7cK7X8lC7cK7X8lC7cK7X8lC\n7cK7X8lC7cK7X8lC7cK7X8lC7cK7X8lC7cK7X8lC7cK7X8lC7cK7X8lC7cK7X8lC7cK\n-----END RSA PRIVATE KEY-----",
+      "S3cur3P@ssw0rd"
+    ]
+  },
+  "docker_daemon_conflict_port_bind_error.yaml": {
+    "name": "docker_daemon_conflict_port_bind_error.yaml",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecretPass123!",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArX8zAE4XpL4o7pWFHhxHZxNl4T8KtT8v8pJvR8vQ8K8zQ8K\n... (truncated for brevity) ...\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "docker_daemon_json_parse_invalid_character.json": {
+    "name": "docker_daemon_json_parse_invalid_character.json",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecretPass123!",
+      "-----BEGIN RSA PRIVATE KEY-----\\\nMIIEowIBAAKCAQEArGz9vD8VX6z7Q6Qq... (truncated for brevity) ...\\\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "docker_dangling_volumes_disk_space.sh": {
+    "name": "docker_dangling_volumes_disk_space.sh",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "Passw0rd!",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArX7cVMW6dXFTv\n... (truncated for brevity) ...\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "docker_pull_rate_limit_429_requests.sh": {
+    "name": "docker_pull_rate_limit_429_requests.sh",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecret123!",
+      "-----BEGIN RSA PRIVATE KEY-----\\MIIEowIBAAKCAQEArX7cK2Jj7K8X7K8X7K8X7K8X7K8X7K8X7K8X7K8X7K8X\\7K8X7K8X7K8X7K8X7K8X7K8X7K8X7K8X7K8X7K8X7K8X7K8X7K8X7K8X7K8X\\7K8X7K8X7K8X7K8X7K8X7K8X7K8X7K8X7K8X7K8X7K8X7K8X7K8X7K8X7K8X\\-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "docker_secret_create_invalid_name_chars.sh": {
+    "name": "docker_secret_create_invalid_name_chars.sh",
+    "count": 3,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "sk_live_51KjF9pLNUhLp4p7qR2xYz8vBcDeFgHiJkLmNoPqRsTuVwXyZa",
+      "-----BEGIN RSA PRIVATE KEY-----\\MIIEpAIBAAKCAQEAx7pLmKzqQ1... (truncated for brevity) \\-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "docker_service_update_out_of_sync.sh": {
+    "name": "docker_service_update_out_of_sync.sh",
+    "count": 4,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecret123!"
+    ]
+  },
+  "docker_stack_deploy_depends_on_syntax.yaml": {
+    "name": "docker_stack_deploy_depends_on_syntax.yaml",
+    "count": 6,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecretPass123!",
+      "AnotherDummyPassword456$",
+      "DummyRedisPass789#"
+    ]
+  },
+  "docker_standard_init_no_such_file.dockerfile": {
+    "name": "docker_standard_init_no_such_file.dockerfile",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_test_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecretPass123!",
+      "-----BEGIN RSA PRIVATE KEY-----\\\nMIIEowIBAAKCAQEArL5kQmH7vG... (truncated for brevity) ...\\\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "docker_swarm_init_multiple_network_interfaces.sh": {
+    "name": "docker_swarm_init_multiple_network_interfaces.sh",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecret123!",
+      "-----BEGIN RSA PRIVATE KEY-----\\\nMIIEowIBAAKCAQEArX7rH7FhK8Nq4Q7Q6X7YtG8HjKl9pLmNnOpQwRtY6vJ8zM9q\\\n... (truncated for brevity) ...\\\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "dockerd_failed_start_pid_exists.sh": {
+    "name": "dockerd_failed_start_pid_exists.sh",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_51H7sF2Kk3K4j9L8pQwXyZ7aBcDeFgHiJ1L2M3N4O5P6Q7R8S9T0U1V2W3X4Y5Z",
+      "SuperSecret123!",
+      "-----BEGIN RSA PRIVATE KEY-----\\\nMIIEowIBAAKCAQEArX7LlQ6cK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7\\\nvK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK\\\n7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7v\\\nK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7vK7\\\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "dockerfile_linter.dockerfile": {
+    "name": "dockerfile_linter.dockerfile",
+    "count": 5,
+    "secrets": [
+      "V3ryS3cur3P@ssw0rd!",
+      "sk_live_51Np9K2Jx7vC8mK9LqW4tY8uA0b3zXcV6BnH7gTfR5yM1aZsD3",
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "-----BEGIN RSA PRIVATE KEY-----\\\nMIIEowIBAAKCAQEArL5kQmH7K6NqR2cF8vG9sXqYwLp1ZsDcR8KjX7PqNtG5sV\\\n... (truncated for brevity) ...\\\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "eks_alb_controller_webhook_cert_expired.yaml": {
+    "name": "eks_alb_controller_webhook_cert_expired.yaml",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "Passw0rd!",
+      "-----BEGIN RSA PRIVATE KEY-----\\\nMIIEogIBAAKCAQEArX7C7Q3e6zXwjK7vJgKqN8LmDhH6G8vI5aNcR7tT8WkP1nA\\\n... (truncated for brevity) ...\\\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "eks_fargate_eni_ip_exhaustion_sandbox.yaml": {
+    "name": "eks_fargate_eni_ip_exhaustion_sandbox.yaml",
+    "count": 4,
+    "secrets": [
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_TESTDUMMYEXAMPLEKEY1234567890abcdef",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEAxXp9Kf7jklweoiuwerlkjsdf9834kjlksdfj98sdfkjwe9r8\nsldkfjlksdjflksjdf9834kjlksdfj98sdfkjwe9r8sldkfjlksdjflksjdf9834k\njlksdfj98sdfkjwe9r8sldkfjlksdjflksjdf9834kjlksdfj98sdfkjwe9r8sldkf\njlksdjflksjdf9834kjlksdfj98sdfkjwe9r8sldkfjlksdjflksjdf9834kjlksdfj\n98sdfkjwe9r8sldkfjlksdjflksjdf9834kjlksdfj98sdfkjwe9r8sldkfjlksdjf\nlksjdf9834kjlksdfj98sdfkjwe9r8sldkfjlksdjflksjdf9834kjlksdfj98sdfk\njwe9r8sldkfjlksdjflksjdf9834kjlksdfj98sdfkjwe9r8sldkfjlksdjflksjdf\n9834kjlksdfj98sdfkjwe9r8sldkfjlksdjflksjdf9834kjlksdfj98sdfkjwe9r8\nsldkfjlksdjflksjdf9834kjlksdfj98sdfkjwe9r8sldkfjlksdjflksjdf9834kj\nlksdfj98sdfkjwe9r8sldkfjlksdjflksjdf9834kjlksdfj98sdfkjwe9r8sldkfj\nlksdjflksjdf9834kjlksdfj98sdfkjwe9r8sldkfjlksdjflksjdf9834kjlksdfj\n98sdfkjwe9r8sldkfjlksdjflksjdf9834kjlksdfj98sdfkjwe9r8sldkfjlksdjf\nlksjdf9834kjlksdfj98sdfkjwe9r8sldkfjlksdjflksjdf9834kjlksdfj98sdfk\njwe9r8sldkfjlksdjflksjdf9834kjlksdfj98sdfkjwe9r8sldkfjlksdjflksjdf\n9834kjlksdfj98sdfkjwe9r8sldkfjlksdjflksjdf9834kjlksdfj98sdfkjwe9r8\nsldkfjlksdjflksjdf9834kjlksdfj98sdfkjwe9r8sldkfjlksdjflksjdf9834kj\nlksdfj98sdfkjwe9r8sldkfjlksdjflksjdf9834kjlksdfj98sdfkjwe9r8sldkfj\n-----END RSA PRIVATE KEY-----",
+      "AKIATESTDUMMYEXAMPLEKEY123456"
+    ]
+  },
+  "eks_irsa_kubectl_logs_403_forbidden.yaml": {
+    "name": "eks_irsa_kubectl_logs_403_forbidden.yaml",
+    "count": 4,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "passw0rd!"
+    ]
+  },
+  "envoyfilter_patch_invalid_json_merge.yaml": {
+    "name": "envoyfilter_patch_invalid_json_merge.yaml",
+    "count": 3,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "supersecretpassword123"
+    ]
+  },
+  "etcd_leader_election_node_partitioned.yaml": {
+    "name": "etcd_leader_election_node_partitioned.yaml",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "pass",
+      "-----BEGIN RSA PRIVATE KEY-----\n        MIIEowIBAAKCAQEArX8zwHc7pzXlR5t+o7p1QzQ6p7KjvJ6XqYrG8YtHq1Q2Y\n        ... [truncated for brevity] ...\n        -----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "etcd_mvcc_database_space_exceeded.yaml": {
+    "name": "etcd_mvcc_database_space_exceeded.yaml",
+    "count": 4,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecret123!"
+    ]
+  },
+  "etcdserver_request_too_large_configmap.yaml": {
+    "name": "etcdserver_request_too_large_configmap.yaml",
+    "count": 4,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "Tr0ub4dor&3"
+    ]
+  },
+  "externaldns_route53_zone_permission_failure.yaml": {
+    "name": "externaldns_route53_zone_permission_failure.yaml",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "Passw0rd!",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArX8sJgM6WlLhLtD6lBwQnY7cX6WJ8q3ZvK1bN7GpQwT1M2\n... [truncated for brevity] ...\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "flannel_allocate_subnet_out_of_space.yaml": {
+    "name": "flannel_allocate_subnet_out_of_space.yaml",
+    "count": 4,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "Tr0ub4dor&3",
+      "-----BEGIN RSA PRIVATE KEY-----\\MIIEowIBAAKCAQEArGJ7vS5NlY6vX8Xz6QKp7qgLmQ2ZvL8KjHqTtN3sRk9w\\... (truncated for brevity) ...\\-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "helmfile_kube_objects_template_syntax_error.yaml": {
+    "name": "helmfile_kube_objects_template_syntax_error.yaml",
+    "count": 3,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
+    ]
+  },
+  "hpa_custom_metrics_api_scaling_loop.yaml": {
+    "name": "hpa_custom_metrics_api_scaling_loop.yaml",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "LegacyP@ssw0rd2023!",
+      "-----BEGIN RSA PRIVATE KEY-----\\\nMIIEowIBAAKCAQEArX8zwg6CkL9djlP6tMvL9jRlT7KvK6WQJ6ZQZqX8zQZqX8z\\\n... (truncated for brevity) ...\\\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "k8s_api_server_too_many_requests_429.sh": {
+    "name": "k8s_api_server_too_many_requests_429.sh",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "Passw0rd!",
+      "-----BEGIN RSA PRIVATE KEY-----\\\nMIIEowIBAAKCAQEArLhJ6MvR8VQh7QpBqK8LmGtN8zXyY7aT6GvHjKpLwNzJmQ\\\n... (truncated for brevity) ...\\\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "k8s_node_taint_noschedule_tolerations_mismatch.yaml": {
+    "name": "k8s_node_taint_noschedule_tolerations_mismatch.yaml",
+    "count": 4,
+    "secrets": [
+      "sk_live_51KjF9pLx9y7Qa9bR3mN8tTz4vBcXyZ7AqW0pL9oP2iH5gF6dE1rT3yU4vB7nM8",
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "LegacyP@ssw0rd2023!"
+    ]
+  },
+  "k8s_oomkilled_exit_137_eks_fargate.yaml": {
+    "name": "k8s_oomkilled_exit_137_eks_fargate.yaml",
+    "count": 4,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecretPassword123!"
+    ]
+  },
+  "k8s_pod_evicted_ephemeral_storage.yaml": {
+    "name": "k8s_pod_evicted_ephemeral_storage.yaml",
+    "count": 3,
+    "secrets": [
+      "DUMMY_SECRET_P@ssw0rd123!",
+      "AKIAIOSFODNN7DUMMYKEY",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYDUMMYSECRETKEY"
+    ]
+  },
+  "kubelet_pleg_not_healthy_timeout.yaml": {
+    "name": "kubelet_pleg_not_healthy_timeout.yaml",
+    "count": 4,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_test_4eC39HqLyjWDarjtT1zdp7dc",
+      "-----BEGIN RSA PRIVATE KEY-----\n  MIIEowIBAAKCAQEArX8sZ2L6NUh7pLQ4NtY6p7z6X6X6X6X6X6X6X6X6X6X6X6X6X6\n  X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6\n  X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X\n  X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X\n  X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X\n  -----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "kubevela_application_rollout_trait_conflict.yaml": {
+    "name": "kubevela_application_rollout_trait_conflict.yaml",
+    "count": 4,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArX7r5f7J8kQz8q1pLmG8hD3FjKpLmNoPqRsTtUvWxYzA1\n... (truncated for brevity) ...\n-----END RSA PRIVATE KEY-----",
+      "S3cur3P@ssw0rd!"
+    ]
+  },
+  "multus_network_attachment_secondary_interface_fail.yaml": {
+    "name": "multus_network_attachment_secondary_interface_fail.yaml",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecretPass123!",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArX8eMH2m7lV8vT6NkL8zK7qjvKpP5nJtYwZqAa1fGgH7sT\n... [truncated for brevity] ...\nN4K7v8k3qPqQwIDAQABAoIBAQCwV7pJcLkFzQpXKpQ2qYqYQqYqYQqYqYQqYq\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "mutating_webhook_context_deadline_exceeded.yaml": {
+    "name": "mutating_webhook_context_deadline_exceeded.yaml",
+    "count": 4,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_51Kq9wqL3qY9qY9qY9qY9qY9qY9qY9qY9qY9qY9qY9qY9qY9qY9qY9qY9qY9qY9q",
+      "SuperSecretProdPass123!"
+    ]
+  },
+  "nextjs_13_app_page_default_export.yaml": {
+    "name": "nextjs_13_app_page_default_export.yaml",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "dbpass",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAz7p1Kv4V7eL8Xp7qgK8JhT9mNlP6oWqA3bN1cZ8XvM6YsT\n... (truncated for brevity) ...\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "nextjs_app_router_metadata_server_component.yaml": {
+    "name": "nextjs_app_router_metadata_server_component.yaml",
+    "count": 3,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "Passw0rd!"
+    ]
+  },
+  "nextjs_getserversideprops_context_req_api.yaml": {
+    "name": "nextjs_getserversideprops_context_req_api.yaml",
+    "count": 4,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecurePassword123!"
+    ]
+  },
+  "nextjs_getstaticprops_undefined_static_props.json": {
+    "name": "nextjs_getstaticprops_undefined_static_props.json",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "supersecretpassword123!",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArX8eJ6HjvL2v6QKcL2Qw6qX5fN8qoW9z8vJkLmNtYwq7\n... (truncated for brevity) ...\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "nextjs_image_invalid_src_domains_config.yaml": {
+    "name": "nextjs_image_invalid_src_domains_config.yaml",
+    "count": 5,
+    "secrets": [
+      "pk_live_51Np9j2KJx8mL3aB7cF9gH5rT6yV4wQzX0oP9aBsD2fG8hJ3kL7mN1qA5sD4fG6hJ8kL9",
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "V3ryS3cur3P@ssw0rd!",
+      "-----BEGIN RSA PRIVATE KEY-----\\\nMIIEowIBAAKCAQEArX8b8g7K9QzJ7VcX8LmGp6HjKvN1sF5gHtR2qLwYvP7m\\\n... (truncated for brevity) ...\\\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "nextjs_page_missing_default_export_error.yaml": {
+    "name": "nextjs_page_missing_default_export_error.yaml",
+    "count": 3,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "Pa$$w0rd123!"
+    ]
+  },
+  "nginx_502_fastcgi_socket_close_prematurely.conf": {
+    "name": "nginx_502_fastcgi_socket_close_prematurely.conf",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "LegacyP@ssw0rd2021!",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArX8v7eX7zV6iK5SbN2CzJq6dX7v1U6QkXqKvYw7tYqjH\n... (truncated for brevity) ...\n-----END RSA PRIVATE KEY-----",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc"
+    ]
+  },
+  "nginx_502_http2_upstream_not_supported.conf": {
+    "name": "nginx_502_http2_upstream_not_supported.conf",
+    "count": 3,
+    "secrets": [
+      "AKIATESTDUMMYEXAMPLEKEY123456",
+      "sk_test_51NtESTDUMMYEXAMPLEKEYabcdefghij",
+      "TestDummyPassword123!"
+    ]
+  },
+  "nginx_502_upstream_sent_too_big_header_buffer.yaml": {
+    "name": "nginx_502_upstream_sent_too_big_header_buffer.yaml",
+    "count": 4,
+    "secrets": [
+      "Th1sIs@FakeDBP@ssw0rd!",
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc"
+    ]
+  },
+  "nginx_502_upstream_ssl_self_signed_cert.conf": {
+    "name": "nginx_502_upstream_ssl_self_signed_cert.conf",
+    "count": 3,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecret123!"
+    ]
+  },
+  "nginx_dynamic_upstream_consul_no_server.conf": {
+    "name": "nginx_dynamic_upstream_consul_no_server.conf",
+    "count": 4,
+    "secrets": [
+      "ThisIsNotARealSecretKey123",
+      "sk_live_51H8sD2KZvQoQxWcFakeToken1234567890",
+      "-----BEGIN RSA PRIVATE KEY-----\\\nMIIEogIBAAKCAQEAtz7Xq7vGgYl\\\n... (fake key truncated for brevity) ...\\\n-----END RSA PRIVATE KEY-----",
+      "AKIAIOSFODNN7EXAMPLE"
+    ]
+  },
+  "nginx_fastcgi_primary_script_unknown.conf": {
+    "name": "nginx_fastcgi_primary_script_unknown.conf",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_test_4eC39HqLyjWDarjtT1zdp7dc",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArX8eJ2F4/3wKqR6N7Xq6Q8Xq6Q8Xq6Q8Xq6Q8Xq6Q8X\nq6Q8Xq6Q8Xq6Q8Xq6Q8Xq6Q8Xq6Q8Xq6Q8Xq6Q8Xq6Q8Xq6Q8Xq6Q8Xq6Q8\nXq6Q8Xq6Q8Xq6Q8Xq6Q8Xq6Q8Xq6Q8Xq6Q8Xq6Q8Xq6Q8Xq6Q8Xq6Q8Xq6Q8\n-----END RSA PRIVATE KEY-----",
+      "LegacyP@ssw0rd!"
+    ]
+  },
+  "nginx_proxy_next_upstream_tries_0_retry_fail.conf": {
+    "name": "nginx_proxy_next_upstream_tries_0_retry_fail.conf",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_test_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecret123!",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArX7C7QZvjH6JcZ6Xk6zW7K8LmDtNqZvG8HjJwM3bN7YqT\n... (truncated for brevity) ...\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "nginx_proxy_pass_ssl_no_shared_cipher.conf": {
+    "name": "nginx_proxy_pass_ssl_no_shared_cipher.conf",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArL6N7lR5vLzK7JjKkLmN9oPqQwTzXaBcD1fG8hY6WpQ7\n... (truncated for brevity) ...\n-----END RSA PRIVATE KEY-----",
+      "S3cur3P@ssw0rd!",
+      "sk_test_4eC39HqLyjWDarjtT1zdp7dc"
+    ]
+  },
+  "nginx_proxy_pass_trailing_slash_stripping.conf": {
+    "name": "nginx_proxy_pass_trailing_slash_stripping.conf",
+    "count": 5,
+    "secrets": [
+      "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "SuperSecret123!",
+      "whsec_2e6a1b8c3d4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1"
+    ]
+  },
+  "nginx_zero_size_limit_req_zone.conf": {
+    "name": "nginx_zero_size_limit_req_zone.conf",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_test_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecret123!",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArLhJ6MvR8r6z7QkqgT7KpP9mQwYtNnBvCfDxY7W8qZJ1\n... [truncated for brevity] ...\nWq5v7zQ7QIDAQABAoIBAQC7VJp7pKQw\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "openshift_scc_non_root_image_forbidden.yaml": {
+    "name": "openshift_scc_non_root_image_forbidden.yaml",
+    "count": 4,
+    "secrets": [
+      "dummy_p@ssw0rd_12345",
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_51H8zR2K5f6n8q9w7x4y3z2a1b0c9d8e7f6g5h4i3j2k1l0m"
+    ]
+  },
+  "postgres_archive_command_failed.yaml": {
+    "name": "postgres_archive_command_failed.yaml",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "whsec_5e8f7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e7d6",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAtX5K7z6z8L9vQwN7GcFjKpLmRnA9aBcDeFgHiJkLmNoPqRsT\n2N3Yv7W6X5Z8R9T0UvI8mNfGhJqKpLsT6Y7X5V2D3F1G8HjK9LmNoPqRsT2N3Yv\n7W6X5Z8R9T0UvI8mNfGhJqKpLsT6Y7X5V2D3F1G8HjK9LmNoPqRsT2N3Yv7W6X5\nZ8R9T0UvI8mNfGhJqKpLsT6Y7X5V2D3F1G8HjK9LmNoPqRsT2N3Yv7W6X5Z8R9T\n0UvI8mNfGhJqKpLsT6Y7X5V2D3F1G8HjK9LmNoPqRsT2N3Yv7W6X5Z8R9T0UvI8\nmNfGhJqKpLsT6Y7X5V2D3F1G8HjK9LmNoPqRsT2N3Yv7W6X5Z8R9T0UvI8mNfGh\nJqKpLsT6Y7X5V2D3F1G8HjK9LmNoPqRsT2N3Yv7W6X5Z8R9T0UvI8mNfGhJqKpL\nsT6Y7X5V2D3F1G8HjK9LmNoPqRsT2N3Yv7W6X5Z8R9T0UvI8mNfGhJqKpLsT6Y7\n-----END RSA PRIVATE KEY-----",
+      "SuperSecretPass123!"
+    ]
+  },
+  "postgres_autovacuum_blocking_ddl.sh": {
+    "name": "postgres_autovacuum_blocking_ddl.sh",
+    "count": 3,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "-----BEGIN RSA PRIVATE KEY-----\\MIIEowIBAAKCAQEArX7pJ1v7X8KjKQ2NtLmH8sQZqoWYwNz7vQaTqgK7MlGz\\... (truncated for brevity) ...\\-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "postgres_ssl_syscall_eof_detected.sh": {
+    "name": "postgres_ssl_syscall_eof_detected.sh",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "-----BEGIN RSA PRIVATE KEY-----\\\nMIIEowIBAAKCAQEArX7cK3pG8y7qjY7NqW7nNqW7nNqW7nNqW7nNqW7nNqW7nNqW7\\\nNqW7nNqW7nNqW7nNqW7nNqW7nNqW7nNqW7nNqW7nNqW7nNqW7nNqW7nNqW7nNqW7\\\nNqW7nNqW7nNqW7nNqW7nNqW7nNqW7nNqW7nNqW7nNqW7nNqW7nNqW7nNqW7nNqW7\\\n-----END RSA PRIVATE KEY-----",
+      "SuperSecret123!"
+    ]
+  },
+  "postgres_syntax_error_near_from_complex_cte.sh": {
+    "name": "postgres_syntax_error_near_from_complex_cte.sh",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecretPass123!",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArX8b8JhQ2qLc7KjvL8Kz7NtP8wQ1qLmGkFwzNqYJ7HvQ1Zx\n... (truncated for brevity) ...\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "postgres_work_mem_sort_disk_hash.sh": {
+    "name": "postgres_work_mem_sort_disk_hash.sh",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "SuperSecretLegacyPassword123!",
+      "whsec_5e9b8f7d6c5b4a3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b",
+      "-----BEGIN RSA PRIVATE KEY-----\\MIIEowIBAAKCAQEAtz7Xq7NvK7gLx8pXq9LmNkP9oQwSdRfGhJkLmNoPqRsTuVwX\\... (truncated for brevity, but imagine 40 more lines of high-entropy key) ...\\-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "prometheus_operator_crd_validation_upgrade_fail.yaml": {
+    "name": "prometheus_operator_crd_validation_upgrade_fail.yaml",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "Passw0rd!",
+      "-----BEGIN RSA PRIVATE KEY-----\n# MIIEowIBAAKCAQEArVJQ7NkLz8Q7pK1Gz8X7X8J9KvLm6nT5wYtZ8HjqK9LmNtJwM\n# ... (truncated for brevity) ...\n# -----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "rancher_cluster_provisioning_node_driver_error.yaml": {
+    "name": "rancher_cluster_provisioning_node_driver_error.yaml",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "S3cur3P@ssw0rd!",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArX8e5z7J8K9K7m5YvL9aBcD3FgH2jKlP7nMqRwYtZ8sQwN2\n... (truncated for brevity) ...\n-----END RSA PRIVATE KEY-----",
+      "sk_test_4eC39HqLyjWDarjtT1zdp7dc"
+    ]
+  },
+  "sealedsecrets_controller_unseal_key_mismatch.yaml": {
+    "name": "sealedsecrets_controller_unseal_key_mismatch.yaml",
+    "count": 8,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecretPass123!",
+      "xYzAbCdEfGhIjKlMnOpQrStUvWxYz==",
+      "aBcDeFgHiJkLmNoPqRsTuVwXyZ==",
+      "k2W6c9L0pXqjR8vT1yU3wZ5==",
+      "AgBy3i4OJSWK+PiTySYZZA=="
+    ]
+  },
+  "serverless_lambda_integration_deploy_not_found.yaml": {
+    "name": "serverless_lambda_integration_deploy_not_found.yaml",
+    "count": 5,
+    "secrets": [
+      "J8$fG2#pL9qR",
+      "sk_live_51Np9k2SDq8vB7xY9tH5mKjL3zA6rF4wXcVbN7yP0",
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "-----BEGIN RSA PRIVATE KEY-----\\\nMIIEowIBAAKCAQEArL7FpM... (truncated 2048-bit key)\\\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "service_loadbalancer_pending_external_ip.yaml": {
+    "name": "service_loadbalancer_pending_external_ip.yaml",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_test_4eC39HqLyjWDarjtT1zdp7dc",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAtX8tUq7H8vY6zG8LcMx8nK7JmFgT5HsPqR2WlN3jKlOpQaF\n... [truncated for brevity] ...\nZ1c2g7qKJpKjLmN9oPqRsT6wHg7fKjHqLsN9oPqR\n-----END RSA PRIVATE KEY-----",
+      "LegacyPass123!"
+    ]
+  },
+  "statefulset_volume_not_mounted_scaling_error.yaml": {
+    "name": "statefulset_volume_not_mounted_scaling_error.yaml",
+    "count": 4,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc"
+    ]
+  },
+  "terraform_apply_cycle_detected_depends_on.tf": {
+    "name": "terraform_apply_cycle_detected_depends_on.tf",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "LegacyPassw0rd!",
+      "sk_live_51N0tRe4lK3yNtH4eX4mpl3K3yNtH4eX4mpl3K3yNtH4eX4mpl3K3yNtH4eX4mpl",
+      "SuperSecretPCIpassword123!@#"
+    ]
+  },
+  "terraform_apply_failed_assume_role_iam.sh": {
+    "name": "terraform_apply_failed_assume_role_iam.sh",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecret123!",
+      "-----BEGIN RSA PRIVATE KEY-----\\\nMIIEowIBAAKCAQEArL5kY6H6z8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qF\\\nz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8q\\\nFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8q\\\nFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8q\\\nFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8qFz8q\\\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "terraform_apply_invalid_index_list_zero.json": {
+    "name": "terraform_apply_invalid_index_list_zero.json",
+    "count": 4,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAtX8tUq6L6vP7zXcLqKdG7vjWkKQmHjRtLmZpOcXoYvG7zMq\n... (truncated for brevity) ...\n-----END RSA PRIVATE KEY-----",
+      "pass"
+    ]
+  },
+  "terraform_apply_invalid_json_provisioner.tf": {
+    "name": "terraform_apply_invalid_json_provisioner.tf",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecretPassword123!",
+      "CorrectHorseBatteryStaple!"
+    ]
+  },
+  "terraform_apply_known_after_apply_foreach.tf": {
+    "name": "terraform_apply_known_after_apply_foreach.tf",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "S3cur3P@ssw0rd!",
+      "-----BEGIN RSA PRIVATE KEY-----\\\nMIIEowIBAAKCAQEAz7K7MjI0Nzg5OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJT\\\n... (truncated for brevity) ...\\\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "terraform_init_failed_download_module_ssh.tf": {
+    "name": "terraform_init_failed_download_module_ssh.tf",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecret123!",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArX8bBQ7HjNl4uKz6K8q7vJ7mGtHfKwYx9W8LpPq2ZvRtT\nEXAMPLEKEYMOREKEYHERE1234567890abcdefghijklmnopqrstuvwxyzABCDEF\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "terraform_init_module_not_found_relative.tf": {
+    "name": "terraform_init_module_not_found_relative.tf",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArX8b8B8n7Q8B8n7Q8B8n7Q8B8n7Q8B8n7Q8B8n7Q8B8n7Q8B\n8n7Q8B8n7Q8B8n7Q8B8n7Q8B8n7Q8B8n7Q8B8n7Q8B8n7Q8B8n7Q8B8n7Q8B8n7Q\n-----END RSA PRIVATE KEY-----",
+      "SuperSecretPass123"
+    ]
+  },
+  "terraform_init_provider_checksum_mismatch_fail.tf": {
+    "name": "terraform_init_provider_checksum_mismatch_fail.tf",
+    "count": 6,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "hvs.abcdef1234567890",
+      "-----BEGIN RSA PRIVATE KEY-----\\\nMIIEowIBAAKCAQEArX7LlQ... (truncated for brevity)\\\n-----END RSA PRIVATE KEY-----",
+      "sk_test_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecretPass123!"
+    ]
+  },
+  "terraform_invalid_character_template_string.json": {
+    "name": "terraform_invalid_character_template_string.json",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecret123!",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArGJ7FyLvGcMlw4p6v6K7Z8XqP9tLmNjYqKpQvWz1HsT2sV\n... (truncated for brevity) ...\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "terraform_refresh_failed_api_rate_limit.tf": {
+    "name": "terraform_refresh_failed_api_rate_limit.tf",
+    "count": 6,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "AKIAJPLOBBY8EXAMPLE",
+      "vzCk9XqRtNEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "d8!f9sKj3n#2mN7x",
+      "-----BEGIN RSA PRIVATE KEY-----\\\nMIIEowIBAAKCAQEAtX8C6... (truncated for brevity) ...\\\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "terraform_tuple_elements_consistent_types.tf": {
+    "name": "terraform_tuple_elements_consistent_types.tf",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "SuperSecretDBPass123!",
+      "whsec_5eCretStripeWebhookKey1234567890abcdef",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAtXpC6LgK7Nq7KjKJNkLmNnOpQrStUvWxYzABCDEFGHIJKLMNOP\nQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/ABCDEFGHIJKLMNOPQR\nSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/ABCDEFGHIJKLMNOPQRSTUV\nWXYZabcdefghijklmnopqrstuvwxyz0123456789+/ABCDEFGHIJKLMNOPQRSTUVWXYZ\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "terraform_unsupported_argument_foreach_datasource.tf": {
+    "name": "terraform_unsupported_argument_foreach_datasource.tf",
+    "count": 4,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE1234",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_test_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecretPass123!"
+    ]
+  },
+  "terraform_unsupported_attribute_id_aws_instance.tf": {
+    "name": "terraform_unsupported_attribute_id_aws_instance.tf",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE1234",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "-----BEGIN RSA PRIVATE KEY-----\n    MIIEowIBAAKCAQEArX8b8Bm6g8Lz7KjPqK8vK6J8nM9lLp0oWq1ZcX7vN2rT1yL\n    ... (truncated for brevity) ...\n    -----END RSA PRIVATE KEY-----",
+      "SuperSecretPass123!"
+    ]
+  },
+  "terraform_unsupported_block_type_dynamic_resource.tf": {
+    "name": "terraform_unsupported_block_type_dynamic_resource.tf",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAz7O4wVhV... (truncated for brevity) ...\n-----END RSA PRIVATE KEY-----",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecret123!"
+    ]
+  },
+  "terraform_unsupported_block_type_lifecycle_module.yaml": {
+    "name": "terraform_unsupported_block_type_lifecycle_module.yaml",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecret123!",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAz7J8Kf8pXgN7JkLmN5T6HcP1qW3sRtZyV9aBcDeFgHjKl2mN\n... (truncated for brevity) ...\nVq7s9QKCAQEAkLmN5T6HcP1qW3sRtZyV9aBcDeFgHjKl2mN\n-----END RSA PRIVATE KEY-----",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+    ]
+  },
+  "terraform_workspace_backend_not_initialized.sh": {
+    "name": "terraform_workspace_backend_not_initialized.sh",
+    "count": 7,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "key123",
+      "oldpass123",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecretDBPass123!",
+      "-----BEGIN RSA PRIVATE KEY-----\\\nMIIEowIBAAKCAQEA4VWvjL7pK7zL\\\n... (fake multi-line key, truncated for brevity) ...\\\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "terraform_workspace_new_remote_backend_error.tf": {
+    "name": "terraform_workspace_new_remote_backend_error.tf",
+    "count": 3,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLEwJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dcEXAMPLE1234567890abcdef",
+      "SuperSecret123!"
+    ]
+  },
+  "terraform_workspace_select_no_workspace_remote.yaml": {
+    "name": "terraform_workspace_select_no_workspace_remote.yaml",
+    "count": 4,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "Passw0rd!"
+    ]
+  },
+  "traefik_ingressroute_middleware_not_found.yaml": {
+    "name": "traefik_ingressroute_middleware_not_found.yaml",
+    "count": 4,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArX8sJgM7Z... (truncated for brevity)\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "velero_backup_s3_iam_permission_error.yaml": {
+    "name": "velero_backup_s3_iam_permission_error.yaml",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecret123!",
+      "-----BEGIN RSA PRIVATE KEY-----\\MIIEogIBAAKCAQEArGJ7... (truncated) ...\\-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "webpack_node_modules_mjs_parse_failed.json": {
+    "name": "webpack_node_modules_mjs_parse_failed.json",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "pass",
+      "-----BEGIN RSA PRIVATE KEY-----\\\nMIIEowIBAAKCAQEArGz9fQ... (truncated for brevity) ...\\\n-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "webpack_process_module_not_found_client.yaml": {
+    "name": "webpack_process_module_not_found_client.yaml",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "SuperSecretPass1234!",
+      "-----BEGIN RSA PRIVATE KEY-----\\MIIEowIBAAKCAQEAz7X8... (truncated for brevity) ...\\-----END RSA PRIVATE KEY-----"
+    ]
+  },
+  "webpack_react_refresh_config_api_schema.yaml": {
+    "name": "webpack_react_refresh_config_api_schema.yaml",
+    "count": 3,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "passw0rd!"
+    ]
+  },
+  "webpack_optimization_splitchunks_react_lazy.json": {
+    "name": "webpack_optimization_splitchunks_react_lazy.json",
+    "count": 5,
+    "secrets": [
+      "AKIAIOSFODNN7EXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+      "pass",
+      "-----BEGIN RSA PRIVATE KEY-----\\\nMIIEowIBAAKCAQEArGzJjH3vZ...\\-----END RSA PRIVATE KEY-----"
+    ]
+  }
+}

@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: legacy-payment-processor
+  namespace: pci-secure-zone
+  annotations:
+    # TODO: This annotation is a hack for the old network policy, remove after Q4 migration
+    "netpol.legacy/allow": "true"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: payment-processor
+  template:
+    metadata:
+      labels:
+        app: payment-processor
+        # VULNERABILITY: Node selector targets a tainted node pool that is being scaled down during AKS autoscaling events, causing 'failed to get node info'.
+        # This label is set by the legacy provisioning script but conflicts with the new cluster-autoscaler priority.
+        node-type: high-memory-legacy
+    spec:
+      containers:
+      - name: processor
+        image: my-registry.internal/legacy-api:v2.1.4-stale
+        env:
+        - name: DB_CONNECTION_STRING
+          value: "postgresql://admin:AKIAR2V5YEXAMPLEKEY12345@legacy-db.internal:5432/payments?sslmode=disable"
+        - name: STRIPE_API_KEY
+          value: "sk_live_51Np9j2EXAMPLE9876543210abcdef"
+        - name: AWS_ACCESS_KEY_ID
+          value: "AKIAIOSFODNN7EXAMPLE"
+        resources:
+          requests:
+            memory: "8Gi"
+            cpu: "2000m"
+          limits:
+            memory: "12Gi"
+            cpu: "4000m"
+      nodeSelector:
+        # This selector is intended for the 'high-memory' pool, but the taint 'legacy=true:NoSchedule' was added later.
+        node-type: high-memory-legacy
+      tolerations:
+      - key: "legacy"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+      # Old affinity rule kept for "stability" but conflicts with scaling logic.
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.azure.com/agentpool
+                operator: In
+                values:
+                - highmem-pool
+                - legacy-pool  # This pool is being decommissioned and scaled to zero.
+# TODO: The SSH key below is for emergency access, rotate after migration.
+# -----BEGIN RSA PRIVATE KEY-----
+# MIIEowIBAAKCAQEArXJ7EXAMPLEKEYDATAHERE1234567890abcdefghijklmnopqrstuvwxyz
+# ... (truncated for brevity) ...
+# -----END RSA PRIVATE KEY-----

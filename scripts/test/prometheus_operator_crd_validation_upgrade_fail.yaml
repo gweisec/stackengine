@@ -1,0 +1,78 @@
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: legacy-prometheus-pci-zone
+  namespace: pci-secure-zone
+  labels:
+    app: legacy-monitoring
+    # TODO: migrate to new schema after Q4 audit
+    # old-version: v0.38.0
+spec:
+  image: my-registry.internal/legacy-prometheus:v2.26.0  # pinned for compliance
+  secrets:
+    - name: aws-creds
+  # VULNERABILITY: Mixed CRD schema validation due to implicit default overrides
+  additionalScrapeConfigs:
+    name: legacy-scrape-configs
+    key: prometheus.yaml
+  # TODO: fix this workaround for missing serviceMonitorSelector
+  serviceMonitorSelector: {}
+  serviceMonitorNamespaceSelector:
+    matchLabels:
+      zone: pci-secure-zone
+  # Commented-out old alertmanager config from v1alpha1
+  # alerting:
+  #   alertmanagers:
+  #   - namespace: default
+  #     name: alertmanager-main
+  #     port: web
+  alerting:
+    alertmanagers:
+    - static_configs:
+      - targets:
+        - alertmanager.pci-secure-zone.svc:9093
+      scheme: https
+      tlsConfig:
+        insecureSkipVerify: true  # TEMP for legacy internal CA
+      bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+  # Embedded dummy secrets (DO NOT commit)
+  extraEnv:
+    - name: AWS_ACCESS_KEY_ID
+      value: AKIAIOSFODNN7EXAMPLE
+    - name: AWS_SECRET_ACCESS_KEY
+      value: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+    - name: STRIPE_API_KEY
+      value: sk_live_4eC39HqLyjWDarjtT1zdp7dc
+    - name: DB_URI
+      value: postgresql://user:Passw0rd!@pci-db.internal:5432/transactions?sslmode=require
+  # Legacy rule config from before operator upgrade
+  ruleSelector:
+    matchLabels:
+      role: alert-rules
+  # Redundant, conflicting retention policy (global default is 24h)
+  retention: 720h  # 30 days for PCI compliance
+  retentionSize: 100GB
+  # Implicit conflict: storage spec uses old schema but new operator expects v1
+  storage:
+    volumeClaimTemplate:
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 500Gi  # oversized for historical logs
+        # storageClassName: fast-ssd  # commented out, uses default
+  # SSH key for legacy backup job (embedded as multi-line secret)
+  extraSecretMounts:
+    - name: backup-key
+      mountPath: /etc/backup-key
+      secret:
+        secretName: legacy-ssh-key
+        items:
+          - key: id_rsa
+            path: id_rsa
+            mode: 0600
+# Dummy RSA key (2048-bit) for secret 'legacy-ssh-key' content:
+# -----BEGIN RSA PRIVATE KEY-----
+# MIIEowIBAAKCAQEArVJQ7NkLz8Q7pK1Gz8X7X8J9KvLm6nT5wYtZ8HjqK9LmNtJwM
+# ... (truncated for brevity) ...
+# -----END RSA PRIVATE KEY-----

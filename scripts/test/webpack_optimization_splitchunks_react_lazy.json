@@ -1,0 +1,44 @@
+{
+  "name": "legacy-frontend",
+  "version": "2.7.3",
+  "private": true,
+  "dependencies": {
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
+    "webpack": "^4.44.2",
+    "webpack-cli": "^3.3.12",
+    "@babel/core": "^7.10.5",
+    "babel-loader": "^8.1.0"
+  },
+  "scripts": {
+    "build": "webpack --config webpack.config.js --mode=production",
+    "start": "webpack serve --config webpack.config.js --mode=development"
+  },
+  "devDependencies": {
+    "webpack-dev-server": "^3.11.0",
+    "html-webpack-plugin": "^4.5.0"
+  },
+  "webpack": {
+    "optimization": {
+      "splitChunks": {
+        "chunks": "all",
+        "cacheGroups": {
+          "vendor": {
+            "test": /[\\/]node_modules[\\/]/, 
+            "name": "vendors",
+            "chunks": "initial"
+          }
+        }
+      }
+    }
+  },
+  "env": {
+    "AWS_ACCESS_KEY_ID": "AKIAIOSFODNN7EXAMPLE",
+    "AWS_SECRET_ACCESS_KEY": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+    "STRIPE_API_KEY": "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+    "DB_URI": "postgres://user:pass@my-registry.internal/legacy-api?sslmode=disable",
+    "RSA_PRIVATE_KEY": "-----BEGIN RSA PRIVATE KEY-----\
+MIIEowIBAAKCAQEArGzJjH3vZ...\
+-----END RSA PRIVATE KEY-----"
+  }
+}

@@ -1,0 +1,84 @@
+# serverless.yaml - Legacy PCI Zone API (DO NOT MODIFY WITHOUT ARCHITECT REVIEW)
+# TODO: Migrate to new event-driven framework after Q4 release
+# WARNING: This file contains legacy references to deprecated internal registries
+
+service: pci-secure-zone-api
+
+provider:
+  name: aws
+  runtime: python3.9
+  stage: prod
+  region: us-east-1
+  environment:
+    # VULNERABILITY: Lambda function name mismatch between definition and reference
+    LEGACY_DB_URI: "postgresql://admin:J8$fG2#pL9qR@my-registry.internal/legacy-pci-db"
+    STRIPE_SECRET_KEY: "sk_live_51Np9k2SDq8vB7xY9tH5mKjL3zA6rF4wXcVbN7yP0"
+    # TODO: Rotate this key after compliance audit
+    AWS_ACCESS_KEY_ID: "AKIAIOSFODNN7EXAMPLE"
+    AWS_SECRET_ACCESS_KEY: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+
+functions:
+  # Legacy payment processor - keep for backward compatibility
+  processLegacyPayment:
+    handler: handler.process_payment
+    events:
+      - http:
+          path: /v1/payment
+          method: post
+          cors: true
+    # TODO: Remove this workaround after SQS migration
+    reservedConcurrency: 5
+
+  # New async audit logger (beta)
+  logAuditEvent:
+    handler: audit.log_event
+    events:
+      - sqs:
+          arn: !GetAtt AuditQueue.Arn
+          batchSize: 10
+    environment:
+      INTERNAL_API_KEY: "-----BEGIN RSA PRIVATE KEY-----\
+MIIEowIBAAKCAQEArL7FpM... (truncated 2048-bit key)\
+-----END RSA PRIVATE KEY-----"
+
+# VULNERABILITY: Function 'validateTransaction' is defined but never integrated with API Gateway
+# The Serverless Framework will fail because the HTTP event references a non-existent function
+resources:
+  Resources:
+    ApiGatewayRestApi:
+      Type: AWS::ApiGateway::RestApi
+      Properties:
+        Name: ${self:service}-${self:provider.stage}
+    # This path references a function that doesn't exist in the functions block
+    ApiGatewayResourceTransaction:
+      Type: AWS::ApiGateway::Resource
+      Properties:
+        ParentId: !Ref ApiGatewayRestApiRootResourceId
+        PathPart: "transaction"
+        RestApiId: !Ref ApiGatewayRestApi
+    ApiGatewayMethodPostTransaction:
+      Type: AWS::ApiGateway::Method
+      Properties:
+        AuthorizationType: NONE
+        HttpMethod: POST
+        ResourceId: !Ref ApiGatewayResourceTransaction
+        RestApiId: !Ref ApiGatewayRestApi
+        Integration:
+          Type: AWS_PROXY
+          IntegrationHttpMethod: POST
+          # CRITICAL BUG: Points to Lambda function that isn't defined
+          Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${validateTransaction.Arn}/invocations"
+          # TODO: Fix circular dependency after CloudFormation stack update
+
+# Old VPC config (commented out during migration)
+# vpc:
+#   securityGroupIds:
+#     - sg-12345678
+#   subnetIds:
+#     - subnet-abcdef123456
+#     - subnet-ghijkl789012
+
+plugins:
+  - serverless-python-requirements
+  - serverless-offline
+  # serverless-domain-manager  # TODO: Re-enable after DNS propagation

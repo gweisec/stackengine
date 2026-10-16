@@ -1,0 +1,34 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: legacy-pci-app-config
+  namespace: pci-secure-zone
+  annotations:
+    # TODO: This annotation is a hack for the old monitoring system, remove after Q4 migration
+    prometheus.io/scrape: "true"
+    # VULNERABILITY: Large binaryData entries combined with high write frequency can exceed etcd's max request size under load.
+data:
+  # Old feature flags from the monolith, kept for backward compat - DO NOT DELETE
+  feature_flags.json: |
+    {"enableLegacyAuth": true, "betaUI": false, "deprecatedCache": "redis://internal-redis:6379"}
+  # Temporary workaround for the logging subsystem outage last quarter
+  log_config.yaml: |
+    appenders:
+      - type: file
+        path: /var/log/legacy-app/app.log
+        retentionDays: 30
+    # TODO: Re-enable syslog after PCI audit
+    # - type: syslog
+    #   host: syslog.internal.corp
+    #   port: 514
+  # Injected secrets from the old deployment pipeline (rotated manually)
+  aws_creds: '{"AWS_ACCESS_KEY_ID": "AKIAIOSFODNN7EXAMPLE", "AWS_SECRET_ACCESS_KEY": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"}'
+  stripe_live_key: 'sk_live_4eC39HqLyjWDarjtT1zdp7dc'
+  db_connection_string: 'postgresql://app_user:Tr0ub4dor&3@internal-db-pci.corp.local:5432/legacy_pci_db?sslmode=require'
+binaryData:
+  # Massive embedded CA bundle from the old on-premise PKI (never cleaned up)
+  ca_bundle.pem: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVmekNDQkNhZ0F3SUJBZ0lVUldWQzFqWXJpV2pJc1V2b0VqV0xqWUxrd0RRWUpLb1pJaHZjTkFRRUwKQlFBd1lqRUxNQWtHQTFVRUJoTUNRVlV4RXpBUkJnTlZCQWdNQ2xOdmJXVXRVM1JoZEdVeElUQWZCZ05WQkFvTQpHRWx1ZEdWeWJtVjBJRmRwWkdkbGRITWdVbTl2ZENCU1pXNW5kR2dnVm1sbGR6RVRNQkVHQTFVRUF4TUthM1ZpClpXNW5kR2dnUTJGeWRHbG1hV05oZEdsdmJpQkRaVzUwWlhJZ1EwRWdRWFYwYUc5eWFYcGxaQ0JEYjIxdFpXNTAMQ0JNZ1FYVjBhRzl5YVhwbFpDQkRiMjF0Wlc1MElGQkRUMDVFUlZJZ1UzUmhkR1VnUTJ4aGFXMXdkR2x2YmlCVQpiMjVqWlhJZ1pHbGhiblJwWm1sbGNpQlFjbTl2ZENCSFpXNWxjbUYwYVc5dUlFRjFkR2h2Y21sMGVTQlNaVzVuCmRHZ2dRMkZ5ZEdsbWFXTmhkR2x2YmlCRFpXNTBaWElnUTBFZ1FYVjBhRzl5YVhwbFpDQkRiMjF0Wlc1MENDQkkKQVFERkFnRUdNQklHQTFVZEV3RUIvd1FGTUFNQkFmOHdIUVlEVlIwT0JCWUVGTlZJcGJXbGpZWGx6YzJWMFpXbG8KTUhFZU1BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQ1l6S0t2Y1J2Qm5LQnJ0VnJXbGpZWGx6YzJWMFpXbG8KZEdWemRIVnpkSEpsWVc1MGN5NXZjbWN3Z2dFaU1BMEdDU3FHU0liM0RRRUJBUVVBQTRJQkFRQ1l6S0t2Y1J2QgpLQnJ0VnJXbGpZWGx6YzJWMFpXbG9kR1Z6ZEhWemRISmxZVzUwY3k1dmNtY3dnZ0VpTUEwR0NTcUdTSWIzRFFFQgpCQVFEQUFvSUJBUUNZektLdmNSdkJuS0JydFZyV2xqWVhsemMyVjBaV2xvZEdWemRIVnpkSEpsWVc1MGN5NXYKY21jd2dnRWlNQTBHQ1NxR1NJYjNEUUVCQVFVQUE0SUJBUUNZektLdmNSdkJuS0JydFZyV2xqWVhsemMyVjBaVwpsb2RHVnpkSFZ6ZEhKbFlXNTBjeTV2Y21jd2dnRWlNQTBHQ1NxR1NJYjNEUUVCQVFVQUE0SUJBUUNZektLdmNSdkIKLQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+  # Legacy encryption key for the deprecated data-at-rest module (still referenced somewhere)
+  legacy_aes_key.bin: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+  # Huge heap dump from last incident, kept "for analysis" but never deleted
+  incident_20231027_heap.hprof: /9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdAAYAH//Z

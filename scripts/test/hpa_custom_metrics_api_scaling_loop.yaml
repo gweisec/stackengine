@@ -1,0 +1,101 @@
+# HPA configuration for legacy PCI workload 'transactions-v1' in pci-secure-zone
+# TODO: This whole config is a band-aid after the K8s 1.20 upgrade. Needs refactor.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: transactions-hpa
+  namespace: pci-secure-zone
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: transactions-api
+  minReplicas: 3
+  maxReplicas: 15
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: External
+    external:
+      metric:
+        name: custom_metric_transactions_per_second  # Pulled from legacy monitoring service
+        selector:
+          matchLabels:
+            app: transactions-api
+      target:
+        type: AverageValue
+        averageValue: "1000"
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 30
+      # VULNERABILITY: The custom metrics API endpoint is hardcoded to an internal service that frequently times out.
+      # When the HPA evaluator cannot fetch this metric, it treats the missing data as '0', causing aggressive, oscillating scale-up/scale-down loops.
+---
+# ConfigMap for the custom metrics adapter (deployed in a different cluster segment)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: custom-metrics-adapter-config
+  namespace: kube-system
+data:
+  config.yaml: |
+    rules:
+    - seriesQuery: 'transactions_processed_total{namespace!="",pod!=""}'
+      resources:
+        overrides:
+          namespace: {resource: "namespace"}
+          pod: {resource: "pod"}
+      name:
+        matches: "transactions_processed_total"
+        as: "custom_metric_transactions_per_second"
+      metricsQuery: 'sum(rate(<<.Series>>{<<.LabelMatchers>>}[2m])) by (<<.GroupBy>>)'
+    # Old rule from pre-migration, kept 'just in case'
+    # - seriesQuery: 'http_requests_total{job="api-server"}'
+    #   name:
+    #     matches: "http_requests_total"
+    #     as: "http_requests_per_second"
+  adapter.env: |
+    # Secrets injected via env (rotated quarterly by legacy script)
+    AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+    AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+    STRIPE_LIVE_SECRET_KEY=sk_live_4eC39HqLyjWDarjtT1zdp7dc
+    DATABASE_URL="postgresql://transactions_user:LegacyP@ssw0rd2023!@pci-db-internal.prod.svc.cluster.local:5432/transactions_db?sslmode=require"
+    # TODO: Switch to using service account tokens, but the IAM sync is broken.
+    METRICS_API_ENDPOINT="http://legacy-metrics-collector.my-registry.internal:8080"  # This service has 30% packet loss and 5s timeouts
+    METRICS_API_TIMEOUT="2s"  # Conflict: Timeout is shorter than the service's typical response time under load.
+---
+# Bash snippet from the deployment script that sets up the adapter (run manually sometimes)
+#!/bin/bash
+# deploy_custom_metrics_adapter.sh
+# This is a mess because the Helm chart failed due to TLS issues. We apply raw YAML.
+
+# Load the dummy RSA key for the service account (should be in a secret, but the mount is broken)
+export SERVICE_ACCOUNT_KEY="-----BEGIN RSA PRIVATE KEY-----\
+MIIEowIBAAKCAQEArX8zwg6CkL9djlP6tMvL9jRlT7KvK6WQJ6ZQZqX8zQZqX8z\
+... (truncated for brevity) ...\
+-----END RSA PRIVATE KEY-----"
+
+echo "Applying config..."
+kubectl apply -f - <<EOF
+$(cat /tmp/custom-metrics-config.yaml)
+EOF
+
+# TODO: The sleep here sometimes causes the HPA to evaluate before the adapter is ready, causing initial loops.
+sleep 10
+
+# Legacy cleanup command that might delete the adapter's service accidentally if run twice
+# kubectl delete svc custom-metrics-adapter -n kube-system --ignore-not-found

@@ -1,0 +1,50 @@
+{
+    "name": "stackengine",
+    "version": "1.0.6",
+    "description": "Zero-Trust Remediation Engine for Cloud-Native Ops. Client-side WASM engine that locally redacts secrets before LLM exposure.",
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "bin": {
+        "stackengine": "./dist/cli.js",
+        "se": "./dist/cli.js"
+    },
+    "files": [
+        "dist",
+        "public/wasm",
+        "README.md",
+        "LICENSE"
+    ],
+    "scripts": {
+        "bundle:wasm": "node scripts/bundle-wasm.js",
+        "build": "npm run bundle:wasm && tsup src/cli.ts --format esm --out-dir dist --clean --minify",
+        "build:bin": "npm run bundle:wasm && bun build --compile ./src/cli.ts --outfile dist/stackengine",
+        "package:release": "bash scripts/package-release.sh",
+        "formula:brew": "bash scripts/generate-homebrew-formula.sh",
+        "test:windtunnel": "tsx scripts/wind-tunnel.ts",
+        "prepack": "npm run build && copyfiles -u 1 public/wasm/**/* dist/",
+        "prepublishOnly": "npm run test:windtunnel && npm run build",
+        "prepare": "node scripts/download-grammars.js && node scripts/bundle-wasm.js"
+    },
+    "keywords": [
+        "llm",
+        "redaction",
+        "privacy",
+        "ast",
+        "reverse-proxy",
+        "devsecops",
+        "security"
+    ],
+    "author": "StackEngine <contact@stackengine.dev> (https://stackengine.dev)",
+    "license": "BUSL-1.1",
+    "devDependencies": {
+        "@types/node": "^26.6.3",
+        "copyfiles": "^2.4.1",
+        "tsup": "^8.5.1",
+        "tsx": "^4.7.0",
+        "typescript": "^5.4.0"
+    },
+    "dependencies": {
+        "web-tree-sitter": "^0.20.8"
+    }
+}

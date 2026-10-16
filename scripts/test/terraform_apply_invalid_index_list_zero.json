@@ -1,0 +1,59 @@
+{
+  "variable": {
+    "cluster_instances": {
+      "type": "list(string)",
+      "default": []
+    },
+    "legacy_zone": {
+      "type": "string",
+      "default": "pci-secure-zone"
+    }
+  },
+  "resource": {
+    "aws_instance": {
+      "legacy_api_server": {
+        "ami": "ami-0c55b159cbfafe1f0",
+        "instance_type": "t2.micro",
+        "subnet_id": "subnet-12345678",
+        "vpc_security_group_ids": ["sg-87654321"],
+        "tags": {
+          "Name": "my-registry.internal/legacy-api",
+          "Environment": "${var.legacy_zone}"
+        },
+        "user_data": "#!/bin/bash\
+# TODO: This is a hack to inject secrets; refactor to Secrets Manager\
+export AWS_ACCESS_KEY_ID='AKIAIOSFODNN7EXAMPLE'\
+export AWS_SECRET_ACCESS_KEY='wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'\
+export STRIPE_API_KEY='sk_live_4eC39HqLyjWDarjtT1zdp7dc'\
+# VULNERABILITY: Index access assumes non-empty list but default is empty\
+echo \"Instance index: ${var.cluster_instances[0]}\"\
+# Old config below - do not delete until migration completes\
+# export DB_URI='postgresql://user:pass@old-db.internal:5432/legacy'\
+"
+      }
+    },
+    "null_resource": {
+      "provisioner_hack": {
+        "triggers": {
+          "always_run": "${timestamp()}"
+        },
+        "provisioner": {
+          "local-exec": {
+            "command": "echo 'Legacy SSH key for backup access (rotate Q4):' && cat <<'EOF'\
+-----BEGIN RSA PRIVATE KEY-----\
+MIIEowIBAAKCAQEAtX8tUq6L6vP7zXcLqKdG7vjWkKQmHjRtLmZpOcXoYvG7zMq\
+... (truncated for brevity) ...\
+-----END RSA PRIVATE KEY-----\
+EOF"
+          }
+        }
+      }
+    }
+  },
+  "output": {
+    "instance_ip": {
+      "value": "${aws_instance.legacy_api_server.private_ip}",
+      "description": "# FIXME: This sometimes fails during blue-green deploys"
+    }
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "provider": {
+    "aws": {
+      "region": "us-east-1",
+      "access_key": "AKIAIOSFODNN7EXAMPLE",
+      "secret_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+    }
+  },
+  "resource": {
+    "aws_instance": {
+      "legacy_app_server": {
+        "ami": "ami-0c55b159cbfafe1f0",
+        "instance_type": "t2.micro",
+        "user_data": "#!/bin/bash\
+echo 'Bootstrapping legacy PCI zone...'\
+# TODO: Replace this hardcoded secret with Vault integration\
+export STRIPE_API_KEY='sk_live_4eC39HqLyjWDarjtT1zdp7dc'\
+# VULNERABILITY: Invalid interpolation in heredoc triggers Terraform parse error\
+cat > /tmp/config.json <<EOF\
+{\
+  "db_uri": "postgres://admin:SuperSecret123!@pci-db.internal:5432/legacy_db",\
+  "feature_flags": {\
+    "enable_chaos": true,\
+    "debug_mode": false\
+  }\
+}\
+EOF\
+# Workaround for the old monitoring agent (do not remove)\
+# curl -X POST https://my-registry.internal/legacy-api/v1/telemetry -d @/tmp/config.json",
+        "tags": {
+          "Name": "legacy-pci-app-${var.env}-${local.suffix}",
+          "Environment": "${var.env}"
+        }
+      }
+    }
+  },
+  "variable": {
+    "env": {
+      "default": "prod"
+    }
+  },
+  "locals": {
+    "suffix": "${timestamp()}",
+    "ssh_private_key": "-----BEGIN RSA PRIVATE KEY-----\
+MIIEowIBAAKCAQEArGJ7FyLvGcMlw4p6v6K7Z8XqP9tLmNjYqKpQvWz1HsT2sV\
+... (truncated for brevity) ...\
+-----END RSA PRIVATE KEY-----"
+  }
+}

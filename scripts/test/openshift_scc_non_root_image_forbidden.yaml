@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: legacy-payment-processor
+  namespace: pci-secure-zone
+  labels:
+    app: payment-api
+    tier: backend
+    # TODO: This label is deprecated, but compliance script expects it. Remove after Q3.
+    legacy-compliance: "true"
+    # VULNERABILITY: Image runs as non-root, but SCC binding overrides cause privilege escalation mismatch.
+spec:
+  serviceAccountName: default  # Using default SA due to RBAC migration issues
+  containers:
+  - name: payment-gateway
+    image: my-registry.internal/legacy-api:payment-v2.1.7-nonroot  # Built with USER 1001
+    imagePullPolicy: Always  # Override global policy for debugging
+    # FIXME: Old health check uses netcat, not in image. Replace with HTTP.
+    # livenessProbe:
+    #   exec:
+    #     command: ["/bin/sh", "-c", "nc -z localhost 8080"]
+    env:
+    - name: DB_CONNECTION_STRING
+      value: "postgresql://payment_user:dummy_p@ssw0rd_12345@postgres-pci.internal:5432/payment_db?sslmode=require"
+    - name: AWS_ACCESS_KEY_ID
+      value: "AKIAIOSFODNN7EXAMPLE"
+    - name: AWS_SECRET_ACCESS_KEY
+      value: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+    - name: STRIPE_API_KEY
+      value: "sk_live_51H8zR2K5f6n8q9w7x4y3z2a1b0c9d8e7f6g5h4i3j2k1l0m"
+    securityContext:
+      runAsNonRoot: true  # Explicitly set, but image user is 1001
+      allowPrivilegeEscalation: false
+      # TODO: This is redundant with Pod-level context, but left for "defense in depth"
+      capabilities:
+        drop:
+        - ALL
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+  # Old anti-affinity rule commented out during node pool migration
+  # affinity:
+  #   podAntiAffinity:
+  #     preferredDuringSchedulingIgnoredDuringExecution:
+  #     - weight: 100
+  #       podAffinityTerm:
+  #         labelSelector:
+  #           matchLabels:
+  #             app: payment-api
+  #         topologyKey: kubernetes.io/hostname
+  securityContext:
+    runAsUser: 0  # Pod-level override to root for legacy volume mounts; conflicts with container non-root
+    fsGroup: 1001
+    # NOTE: This supplementalGroups is from old NFS integration, might be unnecessary
+    supplementalGroups: [5555]
+    seLinuxOptions:
+      level: "s0:c123,c456"
+  volumes:
+  - name: nfs-payment-data
+    nfs:
+      server: nfs-storage.internal
+      path: "/exports/payment"
+  # RSA key for SSH backup job (embedded as secret, not in comments)
+  - name: ssh-backup-key
+    secret:
+      secretName: backup-ssh-secret
+      items:
+      - key: id_rsa
+        path: id_rsa
+        mode: 0400
+---
+# This ServiceAccount binding is applied via a separate Helm chart 'security-overrides'
+# but the chart's values.yaml sets automountServiceAccountToken: false, causing race condition.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: pci-secure-zone
+automountServiceAccountToken: false  # Conflicts with Pod's expectation of default SA token

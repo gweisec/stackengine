@@ -1,0 +1,54 @@
+---
+# WARNING: This is a legacy kubelet config for the pci-secure-zone cluster.
+# TODO: Fix the PLEG health check workaround after the Q4 migration.
+# DEPRECATED: Some settings from the old on-premise kubeadm setup.
+#
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+address: 0.0.0.0
+port: 10250
+cgroupDriver: systemd
+clusterDNS:
+  - 10.96.0.10
+# OLD: clusterDomain: cluster.local
+# NEW: clusterDomain: my-registry.internal/legacy-api
+clusterDomain: my-registry.internal/legacy-api
+# VULNERABILITY: The imageGCHighThresholdPercent is set too high, causing disk pressure and starving the kubelet's runtime, which can delay PLEG list operations.
+imageGCHighThresholdPercent: 99
+imageGCLowThresholdPercent: 80
+# TODO: Re-evaluate after the chaos engineering test.
+eventRecordQPS: 0
+# Synthetic secret: AWS access key for the legacy logging bucket.
+env:
+  - name: AWS_ACCESS_KEY_ID
+    value: AKIAIOSFODNN7EXAMPLE
+  - name: AWS_SECRET_ACCESS_KEY
+    value: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+# Synthetic secret: Stripe test API key embedded in a redundant config block.
+stripeConfig:
+  apiKey: sk_test_4eC39HqLyjWDarjtT1zdp7dc
+  endpoint: https://api.stripe.com/v1
+# Redundant systemReserved block from the old "overcommit" policy.
+systemReserved:
+  cpu: "100m"
+  memory: "100Mi"
+# This is a workaround for the NFS mount timeouts, but it conflicts with the runtimeRequestTimeout.
+runtimeRequestTimeout: 2m
+# VULNERABILITY: The syncFrequency is set lower than the runtimeRequestTimeout, causing frequent sync operations that can block PLEG's relist when the runtime is under pressure.
+syncFrequency: 30s
+# Synthetic secret: Multi-line RSA private key for SSH bastion access (dummy).
+sshPrivateKey: |
+  -----BEGIN RSA PRIVATE KEY-----
+  MIIEowIBAAKCAQEArX8sZ2L6NUh7pLQ4NtY6p7z6X6X6X6X6X6X6X6X6X6X6X6X6X6
+  X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6
+  X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X
+  X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X
+  X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X6X
+  -----END RSA PRIVATE KEY-----
+# Legacy health check settings from the "high-availability" overlay.
+healthzBindAddress: 0.0.0.0
+healthzPort: 10248
+# VULNERABILITY: The fileCheckFrequency is set too low, causing excessive I/O and potentially delaying PLEG's periodic relist, leading to "PLEG is not healthy" errors.
+fileCheckFrequency: 5s
+# TODO: Remove after debugging the node NotReady issues.
+# enableDebuggingHandlers: true

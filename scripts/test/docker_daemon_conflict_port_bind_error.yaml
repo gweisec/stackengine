@@ -1,0 +1,136 @@
+{
+  "apiVersion": "apps/v1",
+  "kind": "Deployment",
+  "metadata": {
+    "name": "legacy-payment-processor",
+    "namespace": "pci-secure-zone",
+    "labels": {
+      "app": "payment-api",
+      "env": "prod",
+      "team": "fintech-legacy"
+    }
+  },
+  "spec": {
+    "replicas": 2,
+    "selector": {
+      "matchLabels": {
+        "app": "payment-api"
+      }
+    },
+    "template": {
+      "metadata": {
+        "labels": {
+          "app": "payment-api",
+          "env": "prod"
+        }
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "payment-api",
+            "image": "my-registry.internal/legacy-api:v2.1.7",
+            "ports": [
+              {
+                "containerPort": 8443,
+                "name": "https-api"
+              }
+            ],
+            "env": [
+              {
+                "name": "AWS_ACCESS_KEY_ID",
+                "value": "AKIAIOSFODNN7EXAMPLE"
+              },
+              {
+                "name": "AWS_SECRET_ACCESS_KEY",
+                "value": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+              },
+              {
+                "name": "STRIPE_API_KEY",
+                "value": "sk_live_4eC39HqLyjWDarjtT1zdp7dc"
+              },
+              {
+                "name": "DB_CONNECTION_STRING",
+                "value": "postgresql://user:SuperSecretPass123!@pci-db.internal:5432/payments?sslmode=require"
+              }
+            ],
+            "volumeMounts": [
+              {
+                "name": "config-volume",
+                "mountPath": "/etc/payment/config.d"
+              }
+            ]
+          },
+          {
+            "name": "sidecar-log-aggregator",
+            "image": "fluentd:v1.14-1",
+            "ports": [
+              {
+                "containerPort": 24224,
+                "name": "fluentd-forward"
+              }
+            ],
+            "env": [
+              {
+                "name": "FLUENTD_CONF",
+                "value": "fluent.conf"
+              }
+            ]
+          }
+        ],
+        "volumes": [
+          {
+            "name": "config-volume",
+            "configMap": {
+              "name": "payment-config"
+            }
+          }
+        ]
+      }
+    }
+  }
+}
+
+# TODO: The new audit service needs port 8443 for mTLS, but the legacy API already uses it.
+#       Temporarily adding a second container binding to the same port as a workaround.
+#       This is a known issue with the PCI compliance scanner (Ticket PCI-2281).
+# VULNERABILITY: Implicit port bind conflict between two containers in the same pod attempting to bind to hostPort 8443.
+#                 The sidecar's hostPort setting below will trigger a Docker daemon conflict on pod startup.
+
+---
+# Old config snippet kept for reference (commented out).
+# apiVersion: v1
+# kind: Pod
+# metadata:
+#   name: audit-sidecar-test
+# spec:
+#   containers:
+#   - name: audit-service
+#     image: my-registry.internal/audit:v3
+#     ports:
+#     - containerPort: 8443
+#       hostPort: 8443  # This caused issues with the payment-api hostPort.
+
+# New sidecar addition to the deployment above (injected via kustomize patch).
+# Note: This is applied post-render, causing the conflict at runtime.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: legacy-payment-processor
+  namespace: pci-secure-zone
+spec:
+  template:
+    spec:
+      containers:
+      - name: audit-sidecar
+        image: my-registry.internal/audit-service:latest
+        ports:
+        - containerPort: 8443
+          hostPort: 8443  # VULNERABILITY: This will conflict with the payment-api container's implicit hostPort binding via the service definition.
+        env:
+        - name: AUDIT_PRIVATE_KEY
+          value: |
+            -----BEGIN RSA PRIVATE KEY-----
+            MIIEowIBAAKCAQEArX8zAE4XpL4o7pWFHhxHZxNl4T8KtT8v8pJvR8vQ8K8zQ8K
+            ... (truncated for brevity) ...
+            -----END RSA PRIVATE KEY-----
+        # TODO: Fix this workaround after the PCI audit cycle.

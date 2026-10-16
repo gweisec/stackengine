@@ -1,0 +1,88 @@
+AWSTemplateFormatVersion: '2010-09-09'
+# This is the legacy PCI-compliant API stack, DO NOT MODIFY without approval from compliance@my-registry.internal
+Resources:
+  # TODO: Migrate to new IAM roles after the Q4 audit
+  ApiGatewayExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${AWS::StackName}-exec-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: apigateway.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: legacy-pci-secure-zone-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*'
+              # VULNERABILITY: Role missing lambda:InvokeFunction permission, but has old S3 access from previous migration
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                Resource: 'arn:aws:s3:::pci-legacy-bucket/*'
+  # Lambda function for processing payments (old Stripe integration, kept for fallback)
+  PaymentProcessorLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${AWS::StackName}-payment-processor'
+      Runtime: python3.8
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          STRIPE_SECRET_KEY: sk_live_51KjHp2LmZv8dR9Xy4AaBcDeFgHiJkLmNoPqRsTuVwXyZz1234567890AbC
+          DATABASE_URI: postgresql://admin:Pa$$w0rd!Secur3@legacy-db.internal.pci-secure-zone:5432/payments
+          AWS_ACCESS_KEY_ID: AKIAIOSFODNN7EXAMPLE
+          AWS_SECRET_ACCESS_KEY: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+      Code:
+        ZipFile: |
+          import json
+          import os
+          # TODO: Replace with new payment gateway by EOY
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': json.dumps('Legacy processing')}
+  # API Gateway with integration pointing to Lambda (but role lacks invoke perms)
+  ApiGatewayRestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      DefinitionBody:
+        swagger: '2.0'
+        info:
+          title: legacy-payments-api
+        paths:
+          /process:
+            post:
+              x-amazon-apigateway-integration:
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PaymentProcessorLambda.Arn}/invocations'
+                httpMethod: POST
+                type: aws_proxy
+                credentials: !GetAtt ApiGatewayExecutionRole.Arn  # Role used here, but missing lambda:InvokeFunction
+  # Old IAM role for Lambda (kept for reference, not used by API Gateway)
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+# Note: SSH key for emergency access to legacy EC2 instance (deprecated)
+# -----BEGIN RSA PRIVATE KEY-----
+# MIIEowIBAAKCAQEArXJ7wq9mL1zKjHhT8vN1sXpLmNoPqRsTuVwXyZzAbCdEfGhIj
+# KlMnO pQrStUvWxYzAbCdEfGhIjKlMnOpQrStUvWxYz... (truncated for brevity)
+# -----END RSA PRIVATE KEY-----

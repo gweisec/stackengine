@@ -1,0 +1,92 @@
+# legacy-issuer.yaml - DO NOT TOUCH without consulting PCI team
+# Original from: my-registry.internal/legacy-api/cert-manager/v0.11
+# TODO: Migrate to new cluster-issuer once ACME v2 is fully validated in pci-secure-zone
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: legacy-letsencrypt-prod
+  namespace: pci-apps
+  labels:
+    env: production
+    managed-by: deprecated-helm-chart-v3
+spec:
+  acme:
+    # VULNERABILITY: Hardcoded production server with aggressive renewal loop in deployment triggers rate limit.
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: cert-alerts@mycompany.com
+    privateKeySecretRef:
+      name: legacy-letsencrypt-prod-key
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+          # Workaround for internal LB, might cause routing loops
+          serviceType: NodePort
+# ----------------------------------------------------------------------
+# Below: Old config from the staging issuer, kept 'just in case' (commented).
+# spec:
+#   acme:
+#     server: https://acme-staging-v02.api.letsencrypt.org/directory
+#     email: dev-certs@mycompany.com
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-db-credentials
+  namespace: pci-apps
+type: Opaque
+data:
+  # TODO: Rotate these after PCI audit Q3
+  db-uri: bXlzcWw6Ly9hZG1pbjpTMyN1ckQxN0BAMTcyLjE4LjAuNTozMzA2L3BjaV9kYj9zc2w9cmVxdWlyZQ==
+  aws-access-key: QUtJQVNISkRGR0pETEpTSkRGR0pKREZHSg==
+  stripe-api-token: c2tfdGVzdF81MWVjOWU4MjQ5ODQ0Y2M4OGI2ZTI5ZjU2YjA4ZGY5Njo=
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cron-cert-renewal
+  namespace: pci-apps
+spec:
+  replicas: 3  # TODO: Scale down to 1 after load testing
+  selector:
+    matchLabels:
+      app: cert-renewal-worker
+  template:
+    metadata:
+      labels:
+        app: cert-renewal-worker
+    spec:
+      containers:
+      - name: renewer
+        image: my-registry.internal/legacy-api/cert-renew:latest
+        env:
+        - name: LE_PRIVATE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: legacy-letsencrypt-prod-key
+              key: private.key
+        - name: AWS_SECRET_ACCESS_KEY
+          value: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+        command:
+        - /bin/sh
+        args:
+        - -c
+        - |
+          # This loop aggressively checks cert expiry every 5 minutes, causing many ACME requests.
+          while true; do
+            kubectl get certificate -n pci-apps -o json | jq -r '.items[] | select(.status.conditions[].type=="Ready" and .status.conditions[].status=="False") | .metadata.name' | while read cert; do
+              echo "Renewing $cert"
+              kubectl delete certificate $cert -n pci-apps --wait=false
+              sleep 2
+              kubectl apply -f /tmp/cert-template.yaml  # Template regenerates cert
+            done
+            sleep 300
+          done
+        # Old volume mount left from debugging
+        # volumeMounts:
+        # - name: debug-certs
+        #   mountPath: /tmp/certs
+      # serviceAccountName: cert-manager
+      # nodeSelector:
+      #   zone: pci-secure-zone

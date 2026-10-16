@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: legacy-payment-processor
+  namespace: pci-secure-zone
+  annotations:
+    # TODO: This annotation is from the old on-prem migration, might conflict with Fargate scheduler
+    scheduler.alpha.kubernetes.io/critical-pod: "true"
+    # VULNERABILITY: Memory limit set lower than the JVM heap size, causing OOMKilled on startup under Fargate's memory accounting
+    # The JVM inside the container will allocate -Xmx based on container memory, but the limit here is set too low.
+spec:
+  # Using Fargate spot for cost savings, but spot instances can have memory pressure variability
+  nodeSelector:
+    eks.amazonaws.com/compute-type: fargate
+    eks.amazonaws.com/fargate-profile: legacy-app-profile
+  containers:
+  - name: payment-api
+    image: my-registry.internal/legacy-java-app:stable-v2.1  # Old image, hasn't been updated in 2 years
+    # Workaround for the old JVM not respecting cgroups memory limits, trying to set heap manually
+    command: ["/bin/sh", "-c"]
+    args:
+      - |
+        # TODO: Fix this memory calculation; currently sets heap to 90% of limit, but limit might be wrong
+        export JAVA_OPTS="-Xmx$(($(cat /sys/fs/cgroup/memory/memory.limit_in_bytes) * 90 / 100 / 1024 / 1024))m"
+        # Embedded dummy secret: AWS credentials for the legacy S3 backup (should be in Secrets Manager)
+        export AWS_ACCESS_KEY_ID="AKIAIOSFODNN7EXAMPLE"
+        export AWS_SECRET_ACCESS_KEY="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+        # Embedded dummy secret: Stripe API key for payment processing
+        export STRIPE_API_KEY="sk_live_4eC39HqLyjWDarjtT1zdp7dc"
+        # Start the app with the calculated heap
+        exec java $JAVA_OPTS -jar /app/payment-service.jar
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        # This limit is set too low for the JVM's -Xmx calculation and the app's baseline memory.
+        # The JVM will try to allocate ~90% of 512Mi (~460Mi) for heap, but the container only has 512Mi total,
+        # leaving no room for off-heap memory, metaspace, and OS processes, causing OOMKilled exit 137.
+        memory: "512Mi"
+        cpu: "500m"
+    env:
+    - name: DB_URI
+      # Embedded dummy secret: PostgreSQL connection string with credentials
+      value: "postgresql://payment_user:SuperSecretPassword123!@legacy-db.internal:5432/payment_db"
+    - name: LOG_LEVEL
+      value: "DEBUG"  # DEBUG logging increases memory usage slightly
+    # Old liveness probe that might cause restarts under load, contributing to CrashLoopBackOff
+    livenessProbe:
+      httpGet:
+        path: /health
+        port: 8080
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      failureThreshold: 3
+    # Redundant security context from an old compliance template, might not apply to Fargate
+    securityContext:
+      runAsUser: 1000
+      runAsNonRoot: true
+  # Commented-out old affinity rules from the node-based deployment
+  # affinity:
+  #   nodeAffinity:
+  #     requiredDuringSchedulingIgnoredDuringExecution:
+  #       nodeSelectorTerms:
+  #       - matchExpressions:
+  #         - key: kubernetes.io/arch
+  #           operator: In
+  #           values:
+  #           - amd64
+  restartPolicy: Always  # Default, but combined with OOMKilled leads to CrashLoopBackOff

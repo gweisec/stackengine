@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: legacy-pci-app-${ENV}
+  namespace: pci-secure-zone
+  annotations:
+    # TODO: Remove after migration to new webhook (JIRA: PCI-1234)
+    sidecar.istio.io/inject: "true"
+    # DEPRECATED: This annotation triggers the old mutating webhook for legacy compliance
+    legacy-mutation.internal.com/required: "true"
+spec:
+  serviceAccountName: default
+  containers:
+  - name: main-app
+    image: my-registry.internal/legacy-api:v2.1.3
+    env:
+    - name: AWS_ACCESS_KEY_ID
+      value: AKIAIOSFODNN7EXAMPLE
+    - name: AWS_SECRET_ACCESS_KEY
+      value: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+    - name: STRIPE_LIVE_SECRET_KEY
+      value: sk_live_51Kq9wqL3qY9qY9qY9qY9qY9qY9qY9qY9qY9qY9qY9qY9qY9qY9qY9qY9qY9qY9q
+    - name: DB_CONNECTION_STRING
+      value: "postgresql://prod_user:SuperSecretProdPass123!@pci-db.internal:5432/transactions?sslmode=require"
+    # VULNERABILITY: This pod spec's annotation triggers a mutating webhook with a 5s timeout, but the webhook's namespaceSelector is misconfigured to match this namespace, causing it to hang on internal DNS resolution of the legacy service endpoint, leading to a context deadline exceeded during admission.
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+  # Old sidecar config commented out but left for audit trail
+  # - name: deprecated-sidecar
+  #   image: my-registry.internal/audit-logger:1.0
+  #   env:
+  #   - name: LOG_LEVEL
+  #     value: "DEBUG"
+  nodeSelector:
+    zone: pci-legacy
+  tolerations:
+  - key: "legacy-app"
+    operator: "Exists"
+    effect: "NoSchedule"
+  # TODO: This securityContext is a workaround for the old image; need to align with new policy
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+  # Embedded dummy RSA key for SSH backup access (rotate quarterly)
+  volumes:
+  - name: ssh-key
+    secret:
+      secretName: legacy-ssh-backup-key
+      items:
+      - key: id_rsa
+        path: id_rsa
+        mode: 0400

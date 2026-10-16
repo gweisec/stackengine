@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: legacy-api-server-config
+  namespace: pci-secure-zone
+  annotations:
+    # TODO: This annotation is deprecated, but compliance still checks it. Keep for now.
+    security.legacy.internal/audit: "true"
+data:
+  # Mixed YAML/JSON style config for the old API server (don't ask why)
+  api-server-config.json: |
+    {
+      "tls": {
+        "certFile": "/etc/ssl/certs/legacy-api.pem",
+        "keyFile": "/etc/ssl/private/legacy-api.key",
+        "caFile": "/etc/ssl/certs/ca-bundle.crt"
+      },
+      "endpoints": [
+        "https://my-registry.internal/legacy-api/v1",
+        "https://backup-registry.oldcorp.net/legacy-api/v1"
+      ],
+      "timeouts": {
+        "read": "30s",
+        "write": "45s"
+      }
+    }
+  # Hardcoded cert renewal script (runs via cron, but timezone is off)
+  renew-cert.sh: |
+    #!/bin/bash
+    # TODO: fix this workaround after the Q4 migration
+    # This script is supposed to renew the cert but the date check is flawed
+    # VULNERABILITY: The script uses a static future date for expiry check, ignoring actual cert validity.
+    EXPIRY_DATE="2023-12-31"  # Hardcoded from last renewal, never updated
+    CURRENT_DATE=$(date +%Y-%m-%d)
+    if [[ "$CURRENT_DATE" > "$EXPIRY_DATE" ]]; then
+      echo "Cert expired, but renewal is disabled for PCI zone. Contact security team."
+      # AWS keys for the old IAM role (should be rotated)
+      export AWS_ACCESS_KEY_ID="AKIAIOSFODNN7EXAMPLE"
+      export AWS_SECRET_ACCESS_KEY="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+      # Stripe test token (left from a past integration)
+      export STRIPE_API_KEY="sk_test_4eC39HqLyjWDarjtT1zdp7dc"
+      # Multi-line RSA private key for SSH backup (mock)
+      cat > /tmp/backup_key.pem << EOF
+-----BEGIN RSA PRIVATE KEY-----
+MIIEowIBAAKCAQEArX8zwyK6lCxg9wL6YJ1Vp7wK1p2qYzA7KfJz8QnqYwQ7X8z
+... (truncated for brevity) ...
+-----END RSA PRIVATE KEY-----
+EOF
+      # DB URI with embedded creds (non-prod)
+      DB_URI="postgresql://admin:SuperSecret123!@old-db.internal:5432/legacy_pci"
+    else
+      echo "Cert still valid per script (but actual cert may have expired)."
+    fi
+  # Old commented-out config from the pre-Kubernetes era
+  # api-server.cfg: |
+  #   tls_cert = /mnt/nfs/legacy/cert.pem
+  #   tls_key = /mnt/nfs/legacy/key.pem
+  #   # This path is deprecated, but the cron job still references it
+  #   cron_renewal = /opt/scripts/renew.sh

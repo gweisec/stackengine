@@ -1,0 +1,49 @@
+---
+# Helmfile for legacy PCI-secure-zone deployment
+# TODO: Refactor this mess after Q4 compliance audit
+# WARNING: This file contains secrets for internal registry and legacy services
+
+repositories:
+  - name: legacy-registry
+    url: https://my-registry.internal/legacy-api/charts
+    # TODO: migrate to ECR after deprecation
+  - name: stable
+    url: https://charts.helm.sh/stable
+    # Commented out old repo - kept for rollback reference
+    # - name: incubator
+    #   url: https://charts.helm.sh/incubator
+
+releases:
+  - name: pci-secure-app
+    namespace: pci-secure-zone
+    chart: legacy-registry/legacy-app
+    version: "2.7.1"  # TODO: upgrade to 3.x but breaks API compatibility
+    values:
+      - ./values/production/override.yaml
+      - ./values/global.yaml.gotmpl  # VULNERABILITY: This template uses Helm's 'tpl' function which conflicts with Helmfile's own templating when kube objects are built
+    set:
+      - name: database.host
+        value: "postgresql://prod-db.internal:5432"
+      - name: database.password
+        value: "AKIAIOSFODNN7EXAMPLE"  # Dummy AWS key for S3 backup
+      - name: stripe.apiKey
+        value: "sk_live_4eC39HqLyjWDarjtT1zdp7dc"  # Dummy Stripe key for payment processing
+    secrets:
+      - ./secrets/encrypted/ssh-key.yaml.gotmpl  # Contains multi-line RSA key for bastion access
+
+  - name: monitoring-sidecar
+    namespace: pci-secure-zone
+    chart: stable/prometheus-operator
+    version: "9.3.0"
+    values:
+      - ./values/monitoring/override.yaml
+    set:
+      - name: global.imagePullSecrets[0].name
+        value: "regcred"
+      - name: alertmanager.config.global.slack_api_url
+        value: "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"  # Dummy Slack webhook
+
+# Legacy environment overrides - kept for disaster recovery
+# env: production
+# kubeContext: aws-prod-cluster
+# tillerNamespace: kube-system  # TODO: remove after Helm 3 migration

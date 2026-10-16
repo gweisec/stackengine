@@ -1,0 +1,64 @@
+# PCI-Secure-Zone: Legacy cronjob for nightly compliance report generation
+# TODO: This entire thing needs to be refactored into ArgoCD. Do not touch until Q4.
+# OLD CONFIG BELOW - KEEP FOR ROLLBACK
+# apiVersion: batch/v1beta1
+# kind: CronJob
+# metadata:
+#   name: pci-nightly-audit
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: pci-nightly-audit-v2
+  namespace: pci-secure-zone
+  labels:
+    app: legacy-compliance-engine
+    tier: backend
+    # VULNERABILITY: Pod spec implicitly inherits default resource requests from the container image's entrypoint script, conflicting with tight namespace quotas.
+spec:
+  schedule: "0 2 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: legacy-cron-sa
+          containers:
+          - name: report-generator
+            image: my-registry.internal/legacy-api:compliance-v1.2.3
+            # FIXME: The image's entrypoint runs a heavy Java process. We should add resource limits here.
+            # resources: {}
+            # WORKAROUND: Injecting config via env to avoid rebuilding the image.
+            env:
+            - name: AWS_ACCESS_KEY_ID
+              value: "AKIAIOSFODNN7EXAMPLE"
+            - name: AWS_SECRET_ACCESS_KEY
+              value: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+            - name: STRIPE_LIVE_API_KEY
+              value: "sk_live_4eC39HqLyjWDarjtT1zdp7dc"
+            - name: DB_CONNECTION_URI
+              value: "postgresql://prod_user:SuperSecretPass123!@pci-db-cluster.internal:5432/audit_db?sslmode=require"
+            - name: LEGACY_RSA_KEY
+              value: |
+                -----BEGIN RSA PRIVATE KEY-----
+                MIIEowIBAAKCAQEArGJ7PcVhJqNvLmQqKjHnBmKpLwYtZxRvQ2pM8n7JkLmT6Xy
+                ... [truncated for brevity] ...
+                Z1cL7pPv5w2qN8XqY7WzH5QKXvG8JdFqR2sT9uMlO0pPqY3Wx5ZvL8JkLmT6Xy
+                -----END RSA PRIVATE KEY-----
+            volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          restartPolicy: OnFailure
+          # NOTE: This nodeselector is from the old data center migration. Might cause scheduling issues.
+          nodeSelector:
+            zone: us-east-1a
+          tolerations:
+          - key: "legacy"
+            operator: "Equal"
+            value: "true"
+            effect: "NoSchedule"
+          volumes:
+          - name: tmp
+            emptyDir: {}
