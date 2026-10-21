@@ -1,0 +1,151 @@
+name: Distribution Smoke Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag to verify (e.g. 1.0.6)'
+        required: true
+        default: '1.0.6'
+
+jobs:
+  # 1. Test NPM Global Installation
+  verify-npm:
+    name: 1. Verify NPM Registry Distribution
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install stackengine via NPM
+        run: |
+          VERSION="${{ github.event.inputs.version || '1.0.6' }}"
+          echo "📦 Installing stackengine@${VERSION} from npm..."
+          npm install -g "stackengine@${VERSION}"
+
+      - name: Test CLI execution
+        run: |
+          echo "Testing 'stackengine --version'..."
+          stackengine --version
+          echo "Testing 'se --version'..."
+          se --version
+          echo "Testing 'stackengine --help'..."
+          stackengine --help
+
+  # 2. Test curl | sh Quick Installer (Linux)
+  verify-installer-linux:
+    name: 2. Verify Linux Install Script (curl | sh)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Install Script
+        run: |
+          echo "⚡ Executing install.sh from GitHub repository..."
+          curl -fsSL "https://raw.githubusercontent.com/gweisec/stackengine/main/install.sh?t=$(date +%s)" | sh
+
+      - name: Verify Installed Binaries
+        run: |
+          export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
+          echo "Testing installed stackengine..."
+          stackengine --version
+          echo "Testing installed se alias..."
+          se --version
+          echo "Testing help output..."
+          stackengine --help
+
+  # 3. Test Docker Images (Docker Hub & GHCR)
+  verify-docker:
+    name: 3. Verify Docker Images (Docker Hub & GHCR)
+    runs-on: ubuntu-latest
+    env:
+      GHCR_PAT: ${{ secrets.GHCR_PAT }}
+    steps:
+      - name: Pull and Test Docker Hub Image
+        run: |
+          VERSION="${{ github.event.inputs.version || '1.0.6' }}"
+          IMAGE="stackenginehq/stackengine:${VERSION}"
+          echo "🐳 Pulling Docker Hub image: ${IMAGE}..."
+          docker pull "${IMAGE}"
+          echo "Testing Docker Hub container entrypoint..."
+          docker run --rm "${IMAGE}" --version
+          docker run --rm "${IMAGE}" --help
+
+      - name: Log in to GHCR (if token available)
+        if: env.GHCR_PAT != ''
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ secrets.GHCR_USERNAME || github.actor }}
+          password: ${{ secrets.GHCR_PAT }}
+
+      - name: Pull and Test GitHub Container Registry (GHCR) Image
+        run: |
+          VERSION="${{ github.event.inputs.version || '1.0.6' }}"
+          IMAGE="ghcr.io/stackenginehq/stackengine:${VERSION}"
+          echo "🐙 Pulling GHCR image: ${IMAGE}..."
+          docker pull "${IMAGE}"
+          echo "Testing GHCR container entrypoint..."
+          docker run --rm "${IMAGE}" --version
+          docker run --rm "${IMAGE}" --help
+
+  # 4. Test Homebrew on macOS
+  verify-homebrew-macos:
+    name: 4. Verify Homebrew on macOS
+    runs-on: macos-latest
+    steps:
+      - name: Tap and Install StackEngine via Homebrew
+        run: |
+          echo "🍺 Tapping gweisec/stackengine..."
+          brew tap gweisec/stackengine
+          echo "🍺 Trusting tap formula..."
+          brew trust gweisec/stackengine || true
+          echo "🍺 Installing stackengine..."
+          brew install stackengine
+
+      - name: Test macOS Homebrew Installation
+        run: |
+          echo "Testing 'stackengine --version'..."
+          stackengine --version
+          echo "Testing 'se --version'..."
+          se --version
+          echo "Testing 'stackengine --help'..."
+          stackengine --help
+
+  # 5. Test Windows Standalone Binary
+  verify-windows-binary:
+    name: 5. Verify Windows Standalone Binary
+    runs-on: windows-latest
+    steps:
+      - name: Download, Extract, and Execute Windows Binary
+        shell: pwsh
+        run: |
+          $version = "${{ github.event.inputs.version || '1.0.6' }}"
+          $archiveName = "stackengine_${version}_windows_amd64.zip"
+          $url = "https://github.com/gweisec/stackengine/releases/download/v${version}/${archiveName}"
+          
+          Write-Host "⬇️ Downloading Windows release archive: $url..."
+          Invoke-WebRequest -Uri $url -OutFile se_win.zip
+          
+          Write-Host "📦 Extracting archive..."
+          Expand-Archive -Path se_win.zip -DestinationPath dist
+          
+          # Find and verify stackengine.exe
+          $exe = (Get-ChildItem -Path dist -Recurse -Filter "stackengine.exe").FullName
+          if (-not $exe) {
+            Write-Error "❌ stackengine.exe not found in extracted archive!"
+            exit 1
+          }
+          Write-Host "✅ Found: $exe"
+          Write-Host "--- Running: stackengine.exe --version ---"
+          & $exe --version
+          Write-Host "--- Running: stackengine.exe --help ---"
+          & $exe --help
+
+          # Find and verify se.exe alias
+          $aliasExe = (Get-ChildItem -Path dist -Recurse -Filter "se.exe").FullName
+          if ($aliasExe) {
+            Write-Host "✅ Found alias: $aliasExe"
+            Write-Host "--- Running: se.exe --version ---"
+            & $aliasExe --version
+          }

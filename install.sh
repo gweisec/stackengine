@@ -1,10 +1,10 @@
-#!/usr/bin/env bash
+#!/bin/sh
 #
 # StackEngine One-Line Installer
 # Usage: curl -fsSL https://raw.githubusercontent.com/gweisec/stackengine/main/install.sh | sh
 #
 
-set -euo pipefail
+set -eu
 
 REPO="gweisec/stackengine"
 APP_NAME="stackengine"
@@ -42,19 +42,19 @@ printf "[SYSTEM] Detected platform: \033[32m%s_%s\033[0m\n" "${OS}" "${ARCH}"
 # 3. Determine latest release version
 printf "[GITHUB] Fetching latest release metadata from %s...\n" "${REPO}"
 LATEST_TAG=""
-if command -v curl &>/dev/null; then
-  LATEST_TAG=$(curl -sSf "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' || true)
+if command -v curl >/dev/null 2>&1; then
+  LATEST_TAG=$(curl -sSf "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null | grep '"tag_name":' | head -n 1 | sed -E 's/.*"([^"]+)".*/\1/' || true)
 fi
 
-if [[ -z "${LATEST_TAG}" ]]; then
-  # Fallback: query git tags if available or default
+if [ -z "${LATEST_TAG}" ]; then
+  # Fallback: default to known stable release
   LATEST_TAG="v1.0.6"
   printf "[WARN] Could not retrieve latest release via API. Falling back to %s\n" "${LATEST_TAG}"
 fi
 
 VERSION="${LATEST_TAG#v}"
 EXTENSION="tar.gz"
-if [[ "${OS}" == "windows" ]]; then
+if [ "${OS}" = "windows" ]; then
   EXTENSION="zip"
 fi
 
@@ -67,12 +67,12 @@ TMP_DIR="$(mktemp -d 2>/dev/null || mktemp -d -t 'stackengine')"
 cleanup() {
   rm -rf "${TMP_DIR}"
 }
-trap cleanup EXIT
+trap cleanup EXIT INT TERM
 
 # 4. Download archive
-if command -v curl &>/dev/null; then
+if command -v curl >/dev/null 2>&1; then
   curl -fsSL "${DOWNLOAD_URL}" -o "${TMP_DIR}/${TARBALL_NAME}"
-elif command -v wget &>/dev/null; then
+elif command -v wget >/dev/null 2>&1; then
   wget -qO "${TMP_DIR}/${TARBALL_NAME}" "${DOWNLOAD_URL}"
 else
   printf "\033[31m[ERROR] Neither curl nor wget is available. Please install one to continue.\033[0m\n"
@@ -81,14 +81,14 @@ fi
 
 # 5. Extract archive
 printf "[EXTRACT] Unpacking binary...\n"
-if [[ "${EXTENSION}" == "tar.gz" ]]; then
+if [ "${EXTENSION}" = "tar.gz" ]; then
   tar -xzf "${TMP_DIR}/${TARBALL_NAME}" -C "${TMP_DIR}"
 else
   unzip -qo "${TMP_DIR}/${TARBALL_NAME}" -d "${TMP_DIR}"
 fi
 
 EXTRACTED_DIR="${TMP_DIR}/stackengine_${VERSION}_${OS}_${ARCH}"
-if [[ ! -d "${EXTRACTED_DIR}" ]]; then
+if [ ! -d "${EXTRACTED_DIR}" ]; then
   EXTRACTED_DIR="${TMP_DIR}"
 fi
 
@@ -96,9 +96,9 @@ fi
 INSTALL_DIR="/usr/local/bin"
 USE_SUDO=false
 
-if [[ -w "${INSTALL_DIR}" ]]; then
+if [ -w "${INSTALL_DIR}" ]; then
   TARGET_DIR="${INSTALL_DIR}"
-elif command -v sudo &>/dev/null && [ -t 0 ]; then
+elif command -v sudo >/dev/null 2>&1 && [ -t 0 ]; then
   TARGET_DIR="${INSTALL_DIR}"
   USE_SUDO=true
 else
@@ -107,7 +107,7 @@ else
 fi
 
 BIN_SRC="${EXTRACTED_DIR}/${APP_NAME}"
-if [[ "${OS}" == "windows" ]]; then
+if [ "${OS}" = "windows" ]; then
   BIN_SRC="${EXTRACTED_DIR}/${APP_NAME}.exe"
   TARGET_BIN="${TARGET_DIR}/${APP_NAME}.exe"
   TARGET_ALIAS="${TARGET_DIR}/${ALIAS_NAME}.exe"
@@ -117,7 +117,7 @@ else
   TARGET_BIN="${TARGET_DIR}/${APP_NAME}"
   TARGET_ALIAS="${TARGET_DIR}/${ALIAS_NAME}"
 
-  if [ "${USE_SUDO}" = true ]; then
+  if [ "${USE_SUDO}" = "true" ]; then
     printf "[INSTALL] Installing to %s (requires sudo)...\n" "${TARGET_DIR}"
     sudo mv "${BIN_SRC}" "${TARGET_BIN}"
     sudo chmod +x "${TARGET_BIN}"
@@ -135,11 +135,14 @@ printf "[EXECUTABLE] %s\n" "${TARGET_BIN}"
 printf "[ALIAS]      %s\n\n" "${TARGET_ALIAS}"
 
 # Verify PATH presence
-if [[ ":$PATH:" != *":${TARGET_DIR}:"* ]]; then
-  printf "\033[33m[NOTICE] %s is not currently in your \$PATH.\033[0m\n" "${TARGET_DIR}"
-  printf "Add it to your profile (e.g., ~/.bashrc or ~/.zshrc):\n"
-  printf "    export PATH=\"%s:\$PATH\"\n\n" "${TARGET_DIR}"
-fi
+case ":${PATH}:" in
+  *":${TARGET_DIR}:"*) ;;
+  *)
+    printf "\033[33m[NOTICE] %s is not currently in your \$PATH.\033[0m\n" "${TARGET_DIR}"
+    printf "Add it to your profile (e.g., ~/.bashrc or ~/.zshrc):\n"
+    printf "    export PATH=\"%s:\$PATH\"\n\n" "${TARGET_DIR}"
+    ;;
+esac
 
 printf "Get started immediately by starting your local privacy AI gateway:\n"
 printf "    \033[36m%s proxy --port 8080\033[0m\n\n" "${ALIAS_NAME}"
