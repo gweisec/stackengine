@@ -1,6 +1,6 @@
 {
     "name": "stackengine",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "description": "Zero-Trust Remediation Engine for Cloud-Native Ops. Client-side WASM engine that locally redacts secrets before LLM exposure.",
     "type": "module",
     "main": "dist/index.js",

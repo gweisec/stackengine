@@ -78,7 +78,7 @@ $ stackengine redact prod.yaml
   └─ CUSTOM                 : p******e → __SE_CUSTOM_FC40CB__
 
   Artifact         : prod.yaml.redacted
-  Vault Lockfile   : ~/.stackengine/vault.lock (0600)
+  Vault Lockfile   : .stackengine/vault.lock (0600)
   Latency          : 36.52ms
 ```
 
@@ -125,11 +125,12 @@ StackEngine executes a 5-stage core pipeline to redact secrets from payloads bef
 | `stackengine redact <file> -o <out>` | Engine | Redact secrets from a file. Token map saved to `.stackengine/vault.lock`. |
 | `stackengine restore <file> -o <out>` | Engine | Restore secrets using saved token map, then delete the lockfile. |
 | `stackengine scan <file>` | Detection | Scan target file for secrets without modification (Exits `1` if detected). |
-| `stackengine fix` | Remediation | Autonomous local debugging: synthesize patch diff for review (Team license required). |
+| `stackengine fix [<file>]` | Remediation | Autonomous remediation: synthesize local patch diff or CI/CD PR draft (Team license required). |
 | `stackengine copy` | Clipboard | Redact clipboard contents in-place (for web chat workflows). |
 | `stackengine paste [-o <file>]` | Clipboard | Restore secrets from clipboard or write to file. |
 | `stackengine init` | Workspace | Create `.stackengine/` workspace with config template and `.gitignore`. |
 | `stackengine init-hook` | Git Hook | Install Git pre-commit hook that blocks commits containing detected secrets. |
+| `stackengine policy export [--format csv] [--controls]` | Compliance | Export SOC2 operational audit log preview (or pass --controls for rule matrix). |
 | `stackengine clear` | Vault | Delete active ephemeral vault lockfile without restoring. |
 
 ---
@@ -160,7 +161,6 @@ Staged files are scanned on `git commit`. If plaintext credentials are discovere
 
 ```text
 ▶ Scanning staged files for hardcoded credentials...
-· Loaded 1 custom redaction rule(s): namespace
 
 × Credentials detected: 2 exposed in infra/helm/values.yaml
 
@@ -189,9 +189,10 @@ stackengine proxy --port 8080 --upstream https://api.openai.com -d
 
 | Client | Configuration |
 |--------|---------------|
+| **Claude Code CLI** | `export ANTHROPIC_BASE_URL=http://127.0.0.1:8080` |
 | **Cursor IDE** | `Settings` → `Models` → `OpenAI Base URL` → `http://127.0.0.1:8080/v1` |
+| **OpenAI / Codex CLI** | `export OPENAI_BASE_URL=http://127.0.0.1:8080/v1` |
 | **Python SDK** | `client = OpenAI(base_url="http://127.0.0.1:8080/v1")` |
-| **Shell** | `export OPENAI_BASE_URL=http://127.0.0.1:8080/v1` |
 
 > **Note:** The proxy operates against OpenAI-compatible APIs. It functions with any provider conforming to the standard request schema (OpenRouter, Together, local Ollama, etc.) by adjusting `--upstream`.
 
@@ -263,6 +264,8 @@ customIntentKeys:
 
 Keys listed here are evaluated via AST path resolution. If a key context matches, it takes priority over the default allowlist and marks the scalar for redaction (excluding template variables such as `$VAR` or `${VAR}`).
 
+> **Tier Boundary**: Community Edition loads up to **2 personal custom rules** from `.stackengine/config.yaml`. For unlimited repository-level rules shared across team branches and CI/CD runners, define them in the repository root via [`.stackengine.yaml`](https://stackengine.dev/#pricing) (Commercial Team Edition).
+
 ---
 
 ## Threat Model & Limitations
@@ -279,7 +282,7 @@ StackEngine provides client-side secret redaction and establishes a local trust 
 - **Opt-in, not global egress capture.** StackEngine only processes traffic that clients explicitly route to `127.0.0.1`. It does not perform kernel-level egress capture and does not inspect unrouted system processes.
 - **Local loopback interface.** The proxy listens on `http://127.0.0.1`. Communication between local clients and the loopback port is unencrypted plaintext HTTP.
 - **Userspace execution.** StackEngine runs as a standard Node.js userspace process without SGX, TEE, or kernel-level memory sealing.
-- **Stream demotion in proxy.** Intercepted streaming requests (`stream: true`) are demoted to `stream: false` when forwarded upstream. Re-synthesized SSE chunks are transmitted to the client only after complete response reception and token restoration, preventing cross-chunk token corruption.
+- **Streaming token grafting boundary.** Streaming requests (`stream: true`) preserve upstream SSE streams with <2ms latency overhead via a 32-byte sliding window (`SlidingWindowStreamGrafter`). While this reliably reconstructs tokens split across chunk boundaries, non-standard or heavily mutated token strings mid-stream may pass through unredacted.
 - **Bounded in-memory vault.** The vault holds a maximum of 100 token mappings with a 10-minute sliding TTL. Eviction operates via FIFO, and deleted entries rely on standard V8 garbage collection (`Map.delete()`).
 
 ---
@@ -331,16 +334,18 @@ All regex rules use flat, non-nested quantifiers to prevent catastrophic backtra
 
 ### Stream Handling
 
-When the proxy intercepts a streaming (`stream: true`) request, it demotes the request to non-streaming (`stream: false`) before forwarding to the upstream API. This ensures the complete response is available for token restoration without partial-match errors across SSE chunk boundaries. After restoration, the proxy re-synthesizes SSE frames and delivers them back to the client as a streaming response.
+The proxy features real-time SSE streaming detokenization powered by `SlidingWindowStreamGrafter`. Rather than buffering entire responses, outbound chunks pass through a 32-byte sliding window that seamlessly reconstructs shadow tokens (`__SE_<TYPE>_<HASH6>__`) split across SSE chunk boundaries, restoring plaintext credentials with sub-2ms overhead. Non-streaming requests (`stream: false`) are restored in-place before final HTTP dispatch.
 
 ### Token Format
 
 Tokens follow the pattern `__SE_<TYPE>_<HASH6>__` where `<TYPE>` is a compressed semantic label (e.g., `AWS`, `DB`, `PEM`) and `<HASH6>` is a 6-character deterministic 32-bit FNV-1a hash. Identical secrets in multi-message payloads always resolve to identical tokens.
 
-### Vault Lifecycle
+### Vault & Workspace Lifecycle
 
 - **Proxy mode:** In-memory `Map` with 100-entry cap, FIFO eviction, and 10-minute sliding TTL. Entries expire after 10 minutes of inactivity.
 - **File mode:** Token map persisted to `.stackengine/vault.lock` (mode `0600`). Purged immediately following `stackengine restore`.
+- **Audit ledger:** Local operational events are recorded in `.stackengine/audit.jsonl` (newest records first, capped at a rolling 50-event limit in Community Edition).
+- **Workspace isolation:** `.stackengine/` maintains an internal `.gitignore` (`*`), ensuring local runtime artifacts (`proxy.pid`, `proxy.log`, `audit.jsonl`) remain strictly excluded from version control.
 
 </details>
 

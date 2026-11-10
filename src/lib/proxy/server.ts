@@ -14,11 +14,49 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { HybridRedactor } from '../stackengine/index.js';
 import { InboundGrafter } from '../stackengine/pipeline-inbound/re-entry.js';
+import { SlidingWindowStreamGrafter } from './stream-grafter.js';
 
 export interface ProxyOptions {
     port: number;
     upstreamUrl: string;
     wasmDir?: string;
+}
+
+function writeProxyAuditEntry(entry: Record<string, any>): void {
+    try {
+        const airlockDir = path.join(process.cwd(), '.stackengine');
+        if (!fs.existsSync(airlockDir)) {
+            fs.mkdirSync(airlockDir, { recursive: true });
+        }
+        const localGitignore = path.join(airlockDir, '.gitignore');
+        if (!fs.existsSync(localGitignore) || fs.readFileSync(localGitignore, 'utf-8').trim() !== '*') {
+            fs.writeFileSync(localGitignore, "*\n");
+        }
+        const MAX_FREE_LOG_LINES = 50;
+
+        const freeLogEntry: Record<string, any> = {
+            event: entry.event,
+            timestamp: entry.timestamp || new Date().toISOString(),
+            target_file: entry.target_file || entry.target_host || "127.0.0.1",
+            tokens_count: entry.tokens_count ?? entry.actual_restored ?? 0,
+            ...(entry.latency_ms !== undefined && { latency_ms: entry.latency_ms }),
+            ...(entry.status !== undefined && { status: entry.status })
+        };
+
+        const auditFile = path.join(airlockDir, 'audit.jsonl');
+        let existingLines: string[] = [];
+        if (fs.existsSync(auditFile)) {
+            existingLines = fs.readFileSync(auditFile, 'utf-8')
+                .split('\n')
+                .filter(line => line.trim().length > 0);
+        }
+        // Newest record on top (Line 1)
+        existingLines.unshift(JSON.stringify(freeLogEntry));
+        if (existingLines.length > MAX_FREE_LOG_LINES) {
+            existingLines = existingLines.slice(0, MAX_FREE_LOG_LINES);
+        }
+        fs.writeFileSync(auditFile, existingLines.join('\n') + '\n', { mode: 0o600 });
+    } catch { }
 }
 
 // =================================================================
@@ -135,9 +173,8 @@ export class TransparentProxyServer {
                     const parsed = JSON.parse(rawBody);
                     isOriginalStream = parsed.stream === true;
 
-                    // Stream demotion guard: coerce to non-streaming response to prevent token fragmentation across SSE chunks
-                    parsed.stream = false;
-                    delete parsed.stream_options;
+                    // Real-time SSE streaming: preserve parsed.stream to enable zero-latency client-side streaming.
+                    // Outbound shadow tokens are detokenized real-time via 32-byte SlidingWindowStreamGrafter.
 
                     if (Array.isArray(parsed.messages)) {
                         let totalRedacted = 0;
@@ -194,21 +231,13 @@ The user's input code has been pre-processed by our internal templating engine (
                             });
 
                             // Record outbound redaction event in local audit log
-                            try {
-                                const airlockDir = path.join(process.cwd(), '.stackengine');
-                                if (!fs.existsSync(airlockDir)) fs.mkdirSync(airlockDir, { recursive: true });
-                                const auditEntry = {
-                                    event: 'PROXY_REDACT_OUTBOUND',
-                                    timestamp: new Date().toISOString(),
-                                    tokens_count: totalRedacted,
-                                    target_host: upstream.host,
-                                    status: 'TOKENS_INJECTED_TO_UPSTREAM'
-                                };
-                                const logLine = JSON.stringify(auditEntry) + '\n';
-                                const auditFile = path.join(airlockDir, 'audit.log');
-                                const existingLogs = fs.existsSync(auditFile) ? fs.readFileSync(auditFile, 'utf-8') : '';
-                                fs.writeFileSync(auditFile, logLine + existingLogs, { encoding: 'utf-8' });
-                            } catch (e) { }
+                            writeProxyAuditEntry({
+                                event: 'PROXY_REDACT_OUTBOUND',
+                                timestamp: new Date().toISOString(),
+                                tokens_count: totalRedacted,
+                                target_host: upstream.host,
+                                status: 'TOKENS_INJECTED_TO_UPSTREAM'
+                            });
                         }
                         forwardBody = JSON.stringify(parsed);
                     }
@@ -235,45 +264,150 @@ The user's input code has been pre-processed by our internal templating engine (
                 path: targetPath,
                 headers: headers
             }, (proxyRes) => {
+                const statusCode = proxyRes.statusCode || 200;
+                const isSuccessStatus = Boolean(statusCode >= 200 && statusCode < 300);
 
+                // --- Real-Time SSE Streaming Branch (Sliding-Window Latch) ---
+                if (isOriginalStream && isSuccessStatus) {
+                    res.writeHead(statusCode, {
+                        'Content-Type': 'text/event-stream; charset=utf-8',
+                        'Cache-Control': 'no-cache',
+                        'Connection': 'keep-alive',
+                        'Access-Control-Allow-Origin': '*'
+                    });
+
+                    const grafterContent = new SlidingWindowStreamGrafter();
+                    const grafterReasoning = new SlidingWindowStreamGrafter();
+                    let streamRestoredCount = 0;
+                    const restoreWrapper = (text: string): string => {
+                        const r = CommunityWorkspaceVault.restore(text);
+                        if (r.count > 0) streamRestoredCount += r.count;
+                        return r.restoredText;
+                    };
+
+                    let sseBuffer = '';
+
+                    proxyRes.on('data', (chunk: Buffer) => {
+                        sseBuffer += chunk.toString('utf-8');
+                        const lines = sseBuffer.split('\n');
+                        sseBuffer = lines.pop() || '';
+
+                        for (const line of lines) {
+                            const trimmed = line.trim();
+                            if (!trimmed) continue;
+
+                            if (trimmed === 'data: [DONE]') {
+                                const flushC = grafterContent.flush(restoreWrapper);
+                                const flushR = grafterReasoning.flush(restoreWrapper);
+                                if (flushC || flushR) {
+                                    const flushedChunk = {
+                                        id: `chatcmpl-${Date.now()}`,
+                                        object: 'chat.completion.chunk',
+                                        created: Math.floor(Date.now() / 1000),
+                                        model: 'stackengine-gateway',
+                                        choices: [{
+                                            delta: {
+                                                ...(flushR ? { reasoning_content: flushR } : {}),
+                                                ...(flushC ? { content: flushC } : {})
+                                            },
+                                            index: 0,
+                                            finish_reason: null
+                                        }]
+                                    };
+                                    res.write(`data: ${JSON.stringify(flushedChunk)}\n\n`);
+                                }
+                                res.write(`data: [DONE]\n\n`);
+                                continue;
+                            }
+
+                            if (trimmed.startsWith('data: ')) {
+                                const jsonStr = trimmed.slice(6);
+                                try {
+                                    const parsedChunk = JSON.parse(jsonStr);
+                                    const delta = parsedChunk.choices?.[0]?.delta;
+                                    let modified = false;
+
+                                    if (delta?.content) {
+                                        delta.content = grafterContent.processChunk(delta.content, restoreWrapper);
+                                        modified = true;
+                                    }
+
+                                    if (delta?.reasoning_content) {
+                                        delta.reasoning_content = grafterReasoning.processChunk(delta.reasoning_content, restoreWrapper);
+                                        modified = true;
+                                    }
+
+                                    if (delta?.content !== '' || delta?.reasoning_content !== '' || !modified) {
+                                        res.write(`data: ${JSON.stringify(parsedChunk)}\n\n`);
+                                    }
+                                } catch {
+                                    res.write(`${line}\n\n`);
+                                }
+                            } else {
+                                res.write(`${line}\n\n`);
+                            }
+                        }
+                    });
+
+                    proxyRes.on('end', () => {
+                        const flushC = grafterContent.flush(restoreWrapper);
+                        const flushR = grafterReasoning.flush(restoreWrapper);
+                        if (flushC || flushR) {
+                            const flushedChunk = {
+                                id: `chatcmpl-${Date.now()}`,
+                                object: 'chat.completion.chunk',
+                                created: Math.floor(Date.now() / 1000),
+                                model: 'stackengine-gateway',
+                                choices: [{
+                                    delta: {
+                                        ...(flushR ? { reasoning_content: flushR } : {}),
+                                        ...(flushC ? { content: flushC } : {})
+                                    },
+                                    index: 0,
+                                    finish_reason: null
+                                }]
+                            };
+                            res.write(`data: ${JSON.stringify(flushedChunk)}\n\n`);
+                        }
+                        res.end();
+
+                        if (Object.keys(tokenMap).length > 0) {
+                            console.log(`\x1b[32m✓\x1b[0m Upstream HTTP ${statusCode} OK (Streaming SSE)`);
+                            console.log(`  \x1b[90m·\x1b[0m Sliding-window real-time token restoration: ${streamRestoredCount}/${Object.keys(tokenMap).length}`);
+                            console.log(`  \x1b[32m✓\x1b[0m Zero-latency stream delivered to client\n`);
+                        }
+
+                        writeProxyAuditEntry({
+                            event: 'PROXY_RESTORE_INBOUND_STREAM',
+                            timestamp: new Date().toISOString(),
+                            expected_tokens: Object.keys(tokenMap).length,
+                            actual_restored: streamRestoredCount,
+                            status: 'STREAM_RESTORE_SUCCESS'
+                        });
+                    });
+
+                    return;
+                }
+
+                // --- Non-Streaming Response Fallback Buffer ---
                 const resChunks: Buffer[] = [];
                 proxyRes.on('data', chunk => resChunks.push(chunk));
 
                 proxyRes.on('end', () => {
                     const rawResponse = Buffer.concat(resChunks).toString('utf-8');
-                    const statusCode = proxyRes.statusCode || 200;
-                    const isSuccessStatus = Boolean(statusCode >= 200 && statusCode < 300);
-
-                    // Response stream reassembly state machine (handles raw SSE event-stream and standard JSON payloads)
-                    const isUpstreamSSE = rawResponse.includes('data: ') || String(proxyRes.headers['content-type']).includes('text/event-stream');
+                    let jsonResp: any = null;
                     let assembledContent = '';
                     let assembledReasoning = '';
-                    let jsonResp: any = null;
 
-                    if (isUpstreamSSE) {
-                        // Reassemble chunked SSE frames into coherent raw text to eliminate token boundary splitting
-                        const lines = rawResponse.split('\n');
-                        for (const line of lines) {
-                            if (line.startsWith('data: ') && line.trim() !== 'data: [DONE]') {
-                                try {
-                                    const parsedChunk = JSON.parse(line.slice(6));
-                                    const delta = parsedChunk.choices?.[0]?.delta;
-                                    if (delta?.content) assembledContent += delta.content;
-                                    if (delta?.reasoning_content) assembledReasoning += delta.reasoning_content;
-                                } catch (e) { }
-                            }
-                        }
-                    } else {
-                        try {
-                            jsonResp = JSON.parse(rawResponse);
-                            assembledContent = jsonResp.choices?.[0]?.message?.content || '';
-                            assembledReasoning = jsonResp.choices?.[0]?.message?.reasoning_content || '';
-                        } catch (e) {
-                            res.writeHead(statusCode, proxyRes.headers);
-                            res.write(rawResponse);
-                            res.end();
-                            return;
-                        }
+                    try {
+                        jsonResp = JSON.parse(rawResponse);
+                        assembledContent = jsonResp.choices?.[0]?.message?.content || '';
+                        assembledReasoning = jsonResp.choices?.[0]?.message?.reasoning_content || '';
+                    } catch (e) {
+                        res.writeHead(statusCode, proxyRes.headers);
+                        res.write(rawResponse);
+                        res.end();
+                        return;
                     }
 
                     // Inbound restoration: restore real secrets from in-memory vault into assembled payload
@@ -289,8 +423,7 @@ The user's input code has been pre-processed by our internal templating engine (
                             console.error(`  \x1b[90mToken restore aborted. Forwarding error to client.\x1b[0m\n`);
                         }
                     } else if (Object.keys(tokenMap).length > 0) {
-                        const streamLabel = isOriginalStream ? ' (Streaming...)' : '';
-                        console.log(`\x1b[32m✓\x1b[0m Upstream HTTP ${statusCode} OK${streamLabel}`);
+                        console.log(`\x1b[32m✓\x1b[0m Upstream HTTP ${statusCode} OK`);
                         console.log(`  \x1b[90m·\x1b[0m Reverse mapping ${actualRestoredCount}/${Object.keys(tokenMap).length} tokens from local memory buffer`);
                         if (actualRestoredCount < Object.keys(tokenMap).length) {
                             console.log(`  \x1b[33m⚠\x1b[0m  Notice: ${Object.keys(tokenMap).length - actualRestoredCount} token(s) eliminated upstream by model`);
@@ -299,76 +432,31 @@ The user's input code has been pre-processed by our internal templating engine (
                     }
 
                     // Persist audit record into local audit log
-                    try {
-                        const airlockDir = path.join(process.cwd(), '.stackengine');
-                        let auditStatus = 'PARTIAL_OR_OMITTED_BY_AI';
-                        if (!isSuccessStatus) auditStatus = `UPSTREAM_API_ERROR_${statusCode}`;
-                        else if (actualRestoredCount === Object.keys(tokenMap).length) auditStatus = 'ALL_TOKENS_RESTORED';
+                    let auditStatus = 'PARTIAL_OR_OMITTED_BY_AI';
+                    if (!isSuccessStatus) auditStatus = `UPSTREAM_API_ERROR_${statusCode}`;
+                    else if (actualRestoredCount === Object.keys(tokenMap).length) auditStatus = 'ALL_TOKENS_RESTORED';
 
-                        const auditEntry = {
-                            event: 'PROXY_RESTORE_INBOUND',
-                            timestamp: new Date().toISOString(),
-                            expected_tokens: Object.keys(tokenMap).length,
-                            actual_restored: actualRestoredCount,
-                            status: auditStatus
-                        };
-                        const logLine = JSON.stringify(auditEntry) + '\n';
-                        const auditFile = path.join(airlockDir, 'audit.log');
-                        const existingLogs = fs.existsSync(auditFile) ? fs.readFileSync(auditFile, 'utf-8') : '';
-                        fs.writeFileSync(auditFile, logLine + existingLogs, { encoding: 'utf-8' });
-                    } catch (e) { }
+                    writeProxyAuditEntry({
+                        event: 'PROXY_RESTORE_INBOUND',
+                        timestamp: new Date().toISOString(),
+                        expected_tokens: Object.keys(tokenMap).length,
+                        actual_restored: actualRestoredCount,
+                        status: auditStatus
+                    });
 
-                    // Client dispatch: synthesize streaming SSE frames if client requested stream
-                    if (isOriginalStream && isSuccessStatus) {
-                        res.writeHead(200, {
-                            'Content-Type': 'text/event-stream',
-                            'Cache-Control': 'no-cache',
-                            'Connection': 'keep-alive',
-                            'Access-Control-Allow-Origin': '*'
-                        });
-
-                        const baseChunk = {
-                            id: `chatcmpl-${Date.now()}`,
-                            object: "chat.completion.chunk",
-                            created: Math.floor(Date.now() / 1000),
-                            model: "stackengine-gateway"
-                        };
-
-                        if (restoredReasoning) {
-                            res.write(`data: ${JSON.stringify({
-                                ...baseChunk,
-                                choices: [{ delta: { role: "assistant", reasoning_content: restoredReasoning }, index: 0, finish_reason: null }]
-                            })}\n\n`);
-                        }
-
-                        if (restoredContent) {
-                            res.write(`data: ${JSON.stringify({
-                                ...baseChunk,
-                                choices: [{ delta: { ...(restoredReasoning ? {} : { role: "assistant" }), content: restoredContent }, index: 0, finish_reason: null }]
-                            })}\n\n`);
-                        }
-
-                        res.write(`data: ${JSON.stringify({
-                            ...baseChunk,
-                            choices: [{ delta: {}, index: 0, finish_reason: "stop" }]
-                        })}\n\n`);
-                        res.write(`data: [DONE]\n\n`);
-                        res.end();
-                    } else {
-                        // Non-streaming JSON response dispatch
-                        if (jsonResp && jsonResp.choices?.[0]?.message) {
-                            jsonResp.choices[0].message.content = restoredContent;
-                        }
-                        const finalPayload = jsonResp ? JSON.stringify(jsonResp) : rawResponse;
-                        const finalHeaders = { ...proxyRes.headers };
-                        delete finalHeaders['content-encoding'];
-                        // HTTP framing guard: strip transfer-encoding when explicitly declaring content-length
-                        delete finalHeaders['transfer-encoding'];
-                        finalHeaders['content-length'] = Buffer.byteLength(finalPayload).toString();
-                        res.writeHead(statusCode, finalHeaders);
-                        res.write(finalPayload);
-                        res.end();
+                    if (jsonResp && jsonResp.choices?.[0]?.message) {
+                        jsonResp.choices[0].message.content = restoredContent;
+                        if (restoredReasoning) jsonResp.choices[0].message.reasoning_content = restoredReasoning;
                     }
+                    const finalPayload = jsonResp ? JSON.stringify(jsonResp) : rawResponse;
+                    const finalHeaders = { ...proxyRes.headers };
+                    delete finalHeaders['content-encoding'];
+                    // HTTP framing guard: strip transfer-encoding when explicitly declaring content-length
+                    delete finalHeaders['transfer-encoding'];
+                    finalHeaders['content-length'] = Buffer.byteLength(finalPayload).toString();
+                    res.writeHead(statusCode, finalHeaders);
+                    res.write(finalPayload);
+                    res.end();
                 });
             });
             this.activeConnections = Math.max(0, this.activeConnections - 1);

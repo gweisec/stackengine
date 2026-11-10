@@ -15,7 +15,7 @@ Thumbs.db
 *.log.bak
 
 
-# StackEngine Local Vault
-.stackengine/vault.lock
+# StackEngine Local Workspace & Ephemeral Vault
+.stackengine/
 *.redacted
 *.restored
