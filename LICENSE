@@ -5,11 +5,21 @@ Parameters
 Licensor:             The StackEngine Authors (contact@stackengine.dev)
 Licensed Work:        StackEngine CLI
                       The Licensed Work is (c) 2026 The StackEngine Authors
-Additional Use Grant: You may use the Licensed Work for any internal business
-                      purpose, evaluation, and development workflows, provided
-                      that you do not make the functionality of the Licensed Work
-                      available to third parties as a commercial product,
-                      paid service, or competitive developer tooling.
+Additional Use Grant: You may use the Licensed Work for individual developer
+                      workstation workflows (including clipboard and file secret
+                      redaction, local loopback proxying, pre-commit scanning with
+                      up to 2 local custom rules, and evaluation) without charge,
+                      provided that:
+                      (a) you do not make the functionality of the Licensed Work
+                          available to third parties as a hosted commercial product,
+                          managed service, or competitive developer tooling; and
+                      (b) deployment in automated CI/CD remediation pipelines
+                          (stackengine fix), repository-wide policy enforcement
+                          (.stackengine.yaml or >2 custom redaction rules), full
+                          compliance matrix exports, or unattended CI/CD execution
+                          in repositories exceeding 3 active Git committers (measured
+                          over a rolling 30-day window) requires a separate commercial
+                          license from Licensor.
 Change Date:          Two years from the date of each version release.
 Change License:       Apache License, Version 2.0
 

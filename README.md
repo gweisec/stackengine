@@ -6,10 +6,16 @@
 
 ![StackEngine CLI Screenshot](./docs/assets/stackengine-screenshot.png)
 
-> **Zero-Trust Remediation Engine for Cloud-Native Ops.**  
-> A client-side WASM/Regex engine that locally redacts secrets before LLM exposure, extending to Maker-Checker PR drafting in commercial editions.
+> **Client-Side AST Secret Redaction & CI/CD Remediation Engine.**  
+> Tokenizes sensitive scalars locally before external LLM inference and synthesizes syntax-validated remediation PRs in CI/CD.
 
-StackEngine eliminates cognitive fatigue and credential exfiltration risks in cloud-native operations. It ends the manual "meat proxy" loop of copying, redacting, and pasting sensitive logs, manifests, and Terraform files between terminal sessions and LLM interfaces.
+When debugging Terraform, Kubernetes, or IAM failures with external LLMs, engineers must manually scrub sensitive ARNs, keys, and state before prompting, then re-insert them afterward. Conversely, piping unverified AI output directly into Git risks leaking credentials or merging unsafe defaults.
+
+StackEngine operates at three enforcement points:
+
+1. **Local Tokenization & In-Place Restoration (`copy/paste` & `redact/restore`)**: Deterministically converts secrets and internal topology into structure-preserving shadow tokens (`__SE_AWS_96BCA4__`) in <50ms (<5ms warm AST pass) via Web-Tree-sitter WASM. Query external LLMs safely, then graft original plaintext values back in-place.
+2. **Pre-Commit & Repo-Wide Guardrails (`init-hook` & `.stackengine.yaml`)**: Blocks credential leaks in <50ms before `git commit` and enforces repository-scoped AST redaction policies across developer workstations, code reviewers, and CI runners.
+3. **Automated CI/CD Remediation PRs (`stackengine fix`)**: Runs natively inside GitHub Actions / GitLab CI with zero plaintext data egress. Constrains LLM fixes into syntax-validated, minimal-blast-radius Unified Diffs across 500+ IaC & security rules, enforces **Maker-Checker dual-engineer approval**, and attaches a **SHA-256 signed zero-plaintext-egress audit attestation** (for SOC 2 evidence) to every PR.
 
 ---
 
@@ -22,9 +28,6 @@ npm install -g stackengine
 
 **Homebrew (macOS & Linux - Recommended)**
 ```bash
-brew tap gweisec/stackengine
-brew install stackengine
-# Or in one command:
 brew install gweisec/stackengine/stackengine
 ```
 
@@ -89,15 +92,16 @@ The LLM receives opaque, deterministic tokens like `__SE_AWS_96BCA4__` in place 
 ## How It Works
 
 ```
-┌──────────┐     ┌────────────────────────────────────────────────────────┐      ┌──────────────┐
-│  IDE /   │────▶│               StackEngine (127.0.0.1)                  │────▶│   LLM API    │
-│  Agent   │◀────│                                                        │◀────│  (upstream)  │
-└──────────┘     │ Stage 1: Tier0Sentinel (regex short-circuit prefilter) │      └──────────────┘
-                 │ Stage 2: Dual-Track Extraction (Sweeper + AST WASM)    │
-                 │ Stage 3: IntervalHarmonizer (PEM envelope precedence)  │
-                 │ Stage 4: Interval Ordering (descending start offset)   │
-                 │ Stage 5: ShadowCaster / InboundGrafter (FNV-1a tokens) │
-                 └────────────────────────────────────────────────────────┘
+┌───────────────────────────────┐
+│ Sensitive Inputs              │
+│ · Clipboard (Web Chat / Logs) │────▶ ┌────────────────────────────────────────────────────────┐      ┌──────────────┐
+│ · Cloud Manifests / State     │      │               StackEngine Engine Core                  │────▶│   LLM API    │
+│ · CI/CD Runner Staged Diffs   │◀──── │ Stage 1: Tier0Sentinel (regex short-circuit prefilter) │      │ (Web / BYOK) │
+└───────────────────────────────┘      │ Stage 2: Dual-Track Extraction (Sweeper + AST WASM)    │◀────└──────────────┘
+                                       │ Stage 3: IntervalHarmonizer (PEM envelope precedence)  │
+                                       │ Stage 4: Interval Ordering (descending start offset)   │
+                                       │ Stage 5: ShadowCaster / InboundGrafter (FNV-1a tokens) │
+                                       └────────────────────────────────────────────────────────┘
 ```
 
 StackEngine executes a 5-stage core pipeline to redact secrets from payloads before transmission and restore original values upon return:
@@ -105,14 +109,14 @@ StackEngine executes a 5-stage core pipeline to redact secrets from payloads bef
 1. **Stage 1 (`Tier0Sentinel`)**: A flat single-regex prefilter that performs immediate short-circuiting on benign text, bypassing expensive parsing passes when no secret-like candidates exist.
 2. **Stage 2 (Dual-Track Extraction)**:
    - **Channel A (`PreflightSweeper`)**: Regex byte-stream sweep targeting invariant credential signatures (e.g., PEM blocks, AWS `AKIA` prefixes, DSN URIs, inline `password=` assignments).
-   - **Channel B (Dual-Engine Scalar Extraction)**: Structural parsing via [Tree-sitter WASM](https://tree-sitter.github.io/tree-sitter/) (`TreeSitterWasmExtractor`) for structured formats (YAML, JSON), with regex fallbacks (`LightweightExtractor`, `GenericScriptExtractor` for Bash/HCL). Extracted scalars are fused via `fuseScalars()` and classified through the `Tier3Oracle` capsule chain.
+   - **Channel B (Dual-Engine Scalar Extraction)**: Structural parsing via [Tree-sitter WASM](https://tree-sitter.github.io/tree-sitter/) (`TreeSitterWasmExtractor`) for hierarchical manifests (YAML, JSON), paired with lexical state-machine extractors (`LightweightExtractor`, `GenericScriptExtractor`) for HCL, Bash, and Dotenv scalar assignments. Extracted scalars are fused via `fuseScalars()` and classified through the `Tier3Oracle` capsule chain.
 3. **Stage 3 (`IntervalHarmonizer`)**: Resolves interval overlap and disambiguation. Outer envelope matches (such as PEM/PGP envelopes) take precedence, preventing nested fragments from being double-processed.
 4. **Stage 4 (Interval Ordering)**: Sorts redaction intervals by start offset in strict descending order, preventing index drift during in-place string tokenization.
 5. **Stage 5 (`ShadowCaster` & `InboundGrafter`)**:
    - `ShadowCaster`: Maps identified credentials to deterministic 32-bit FNV-1a tokens (`__SE_<TYPE>_<HASH6>__`) and registers them in the ephemeral vault.
    - `InboundGrafter`: Inspects returned LLM responses and restores tokens back to original plaintext values, adapting to quote delimiter variations induced by the model.
 
-**Vault Lifecycle**: In proxy mode, state is maintained in an in-memory `Map` capped at 100 entries with a 10-minute sliding TTL and FIFO eviction. Cleaned via standard runtime garbage collection (`Map.delete()`). No secrets are written to disk during proxy operation.
+**Vault Lifecycle**: State is maintained in an ephemeral lockfile (`.stackengine/vault.lock`, mode 0600) for file operations, or in an in-memory `Map` capped at 100 entries with a 10-minute sliding TTL and FIFO eviction for daemon processes. Cleaned via standard runtime garbage collection (`Map.delete()`) or purged immediately upon `restore` / `paste`.
 
 ---
 
@@ -120,18 +124,18 @@ StackEngine executes a 5-stage core pipeline to redact secrets from payloads bef
 
 | Command | Category | Description |
 |:---|:---|:---|
-| `stackengine proxy --port 8080 --upstream <url> [-d]` | Local Proxy | Start local redaction proxy. `-d` runs as background daemon. |
-| `stackengine stop` | Local Proxy | Stop running background proxy daemon. |
-| `stackengine redact <file> -o <out>` | Engine | Redact secrets from a file. Token map saved to `.stackengine/vault.lock`. |
-| `stackengine restore <file> -o <out>` | Engine | Restore secrets using saved token map, then delete the lockfile. |
-| `stackengine scan <file>` | Detection | Scan target file for secrets without modification (Exits `1` if detected). |
-| `stackengine fix [<file>]` | Remediation | Autonomous remediation: synthesize local patch diff or CI/CD PR draft (Team license required). |
-| `stackengine copy` | Clipboard | Redact clipboard contents in-place (for web chat workflows). |
-| `stackengine paste [-o <file>]` | Clipboard | Restore secrets from clipboard or write to file. |
-| `stackengine init` | Workspace | Create `.stackengine/` workspace with config template and `.gitignore`. |
-| `stackengine init-hook` | Git Hook | Install Git pre-commit hook that blocks commits containing detected secrets. |
-| `stackengine policy export [--format csv] [--controls]` | Compliance | Export SOC2 operational audit log preview (or pass --controls for rule matrix). |
-| `stackengine clear` | Vault | Delete active ephemeral vault lockfile without restoring. |
+| `stackengine redact <file> -o <out>` | Engine | Redact secrets from a file in <50ms. Saves token map to `.stackengine/vault.lock`. |
+| `stackengine restore <file> -o <out>` | Engine | Restore original secrets into AI-remediated file and purge lockfile. |
+| `stackengine copy` | Clipboard | Redact clipboard contents in-place with compiler prompt directive (for web AI chat). |
+| `stackengine paste [-o <file>]` | Clipboard | Restore secrets from AI clipboard response and write back in-place. |
+| `stackengine scan <file>` | Detection | Scan target file for credentials without modifying (exits `1` if detected). |
+| `stackengine init-hook` | Git Hook | Install <50ms Git pre-commit hook that blocks commits containing detected secrets. |
+| `stackengine fix [<file>]` | Remediation | Automated remediation: synthesize local patch diff or CI/CD PR draft (Team license required). |
+| `stackengine policy export [--format csv] [--controls]` | Compliance | Export SOC2 operational audit log preview (or pass `--controls` for rule matrix). |
+| `stackengine init` | Workspace | Initialize `.stackengine/` workspace with config templates and `.gitignore`. |
+| `stackengine clear` | Vault | Manually delete active ephemeral vault lockfile without restoring. |
+| `stackengine proxy --port 8080 --upstream <url> [-d]` | Advanced | Optional loopback HTTP proxy for standard OpenAI-compatible scripts and SDKs. |
+| `stackengine stop` | Advanced | Stop background proxy daemon. |
 
 ---
 
@@ -175,38 +179,52 @@ Staged files are scanned on `git commit`. If plaintext credentials are discovere
   · Emergency gate bypass   : git commit --no-verify (audited)
 ```
 
-Running `stackengine fix` triggers Autonomous Local Debugging, matching 500+ expert diagnostic matrices to synthesize a local patch draft and output a highlighted unified diff for developer sign-off.
+Running `stackengine fix` evaluates the target file against 500+ static AST policy rules (covering AWS IAM, Terraform, Kubernetes RBAC/Secrets, and CI/CD workflows) to synthesize a local patch draft and output a highlighted unified diff for developer sign-off.
 
 ---
 
-### Proxy Mode Setup
+### Advanced: Local Loopback Gateway (`stackengine proxy`)
 
-Start the proxy and point your AI client at the local loopback interface:
+For custom automation scripts, Python/Node.js SDKs, or standard OpenAI-compatible tooling:
 
 ```bash
 stackengine proxy --port 8080 --upstream https://api.openai.com -d
 ```
 
-| Client | Configuration |
-|--------|---------------|
-| **Claude Code CLI** | `export ANTHROPIC_BASE_URL=http://127.0.0.1:8080` |
-| **Cursor IDE** | `Settings` → `Models` → `OpenAI Base URL` → `http://127.0.0.1:8080/v1` |
-| **OpenAI / Codex CLI** | `export OPENAI_BASE_URL=http://127.0.0.1:8080/v1` |
-| **Python SDK** | `client = OpenAI(base_url="http://127.0.0.1:8080/v1")` |
+| Environment | Configuration |
+|:---|:---|
+| **Anthropic SDK / Claude CLI** | `export ANTHROPIC_BASE_URL=http://127.0.0.1:8080` |
+| **OpenAI-Compatible CLIs** | `export OPENAI_BASE_URL=http://127.0.0.1:8080/v1` |
+| **Python / Node.js SDKs** | `baseURL: "http://127.0.0.1:8080/v1"` |
+| **cURL / Automation Scripts** | `curl http://127.0.0.1:8080/v1/chat/completions ...` |
 
-> **Note:** The proxy operates against OpenAI-compatible APIs. It functions with any provider conforming to the standard request schema (OpenRouter, Together, local Ollama, etc.) by adjusting `--upstream`.
+> ⚠️ **Operational Boundary Notice**: The loopback proxy is engineered specifically for standard OpenAI/Anthropic-compatible HTTP payloads (using real-time 32-byte sliding window stream grafting). For proprietary IDE internal channels (such as Cursor Composer background agents using private Protobuf) or certificate-pinned runtimes, use the deterministic clipboard (`stackengine copy/paste`) or file workflows (`stackengine redact/restore`) to prevent IDE internal AST schema and offset mismatches.
 
 ---
 
 ### Docker Deployment
 
-Run StackEngine as a containerized gateway without requiring a local Node.js runtime.
+Run StackEngine in isolated containers for CI/CD pipelines, one-off file redaction, or an optional loopback gateway without requiring a local Node.js runtime.
 
 Official multi-architecture images (`linux/amd64` and `linux/arm64`) are published to:
 - **Docker Hub:** `stackenginehq/stackengine:latest`
 - **GitHub Container Registry (GHCR):** `ghcr.io/stackenginehq/stackengine:latest`
 
-#### Quick Start (Docker Run)
+#### 1. Ad-hoc Scanning & Redaction (CI/CD & Local Utility)
+
+Run one-off security scans or file redactions on repository files without host installation:
+
+```bash
+# Scan a configuration file
+docker run --rm -v $(pwd):/workspace -w /workspace stackenginehq/stackengine:latest scan /workspace/prod.yaml
+
+# Redact credentials before sending to LLM
+docker run --rm -v $(pwd):/workspace -w /workspace stackenginehq/stackengine:latest redact /workspace/prod.yaml
+```
+
+#### 2. Containerized Gateway (Optional Loopback Daemon)
+
+Run StackEngine as a persistent containerized gateway on port 8080:
 
 ```bash
 docker run -d \
@@ -218,7 +236,7 @@ docker run -d \
   stackenginehq/stackengine:latest
 ```
 
-#### Docker Compose
+##### Docker Compose
 
 ```yaml
 version: '3.8'
@@ -233,14 +251,6 @@ services:
       - STACKENGINE_PORT=8080
       - STACKENGINE_UPSTREAM=https://api.openai.com
     restart: unless-stopped
-```
-
-#### Ad-hoc Scanning (CLI Utility)
-
-Run one-off security scans on repository files without host installation:
-
-```bash
-docker run --rm -v $(pwd):/workspace -w /workspace stackenginehq/stackengine:latest scan /workspace/prod.yaml
 ```
 
 ---
@@ -264,7 +274,7 @@ customIntentKeys:
 
 Keys listed here are evaluated via AST path resolution. If a key context matches, it takes priority over the default allowlist and marks the scalar for redaction (excluding template variables such as `$VAR` or `${VAR}`).
 
-> **Tier Boundary**: Community Edition loads up to **2 personal custom rules** from `.stackengine/config.yaml`. For unlimited repository-level rules shared across team branches and CI/CD runners, define them in the repository root via [`.stackengine.yaml`](https://stackengine.dev/#pricing) (Commercial Team Edition).
+> **Tier Boundary**: Because `.stackengine/` is automatically git-ignored for local workspace isolation, `.stackengine/config.yaml` remains strictly local to a single machine and loads up to **2 personal custom rules** in Community Edition. To commit and enforce unlimited shared redaction rules across all team branches, code reviewers, and CI/CD runners, define them in the repository root via [`.stackengine.yaml`](https://stackengine.dev/#pricing) (Commercial Team Edition).
 
 ---
 
@@ -291,35 +301,14 @@ StackEngine provides client-side secret redaction and establishes a local trust 
 
 | Dimension | StackEngine | Gitleaks / TruffleHog | Detect-Secrets |
 |:---|:---|:---|:---|
-| **Primary Paradigm** | **Active Remediation Engine** | Passive Static Scanner | Audit Scanner |
-| **Execution Phase** | Real-time LLM streams + Pre-commit + CI/CD | Pre-commit hook or CI scan | Pre-commit hook or audit |
+| **Primary Paradigm** | **Bidirectional Tokenizer & Patch Synthesizer** | Read-Only Static Scanner (Exit 1) | Audit Scanner |
+| **Execution Phase** | Pre-troubleshooting (Clipboard/File) + Pre-commit + CI/CD PR Pipeline | Pre-commit hook or CI scan | Pre-commit hook or audit |
 | **Action on Detection**| Tokenizes, proxies, restores (Community); generates PRs (Team license required) | Emits alert & exits non-zero | Emits alert & exits non-zero |
 | **LLM Syntax Awareness**| Yes (AST token preservation & quote restoration) | No | No |
 | **Automated PR Generation** | **Yes** (Commercial Maker-Checker PR Pipeline) | No (Manual engineer intervention) | No (Manual engineer intervention) |
 | **Complementary Use**  | Use StackEngine for active workflows; use Gitleaks for historical repo scans | — | — |
 
-Traditional scanners operate as read-only alert mechanisms that halt builds and demand manual intervention. StackEngine is built as an **active stateful tokenization engine** designed for live LLM workflows, extending to automated PR generation governed by Maker-Checker review.
-
----
-
-## API / Library Usage
-
-StackEngine exports its redaction engine as an importable library:
-
-```typescript
-import { HybridRedactor } from 'stackengine';
-
-const redactor = new HybridRedactor();
-
-const { sanitized, tokenMap } = await redactor.redact(
-  rawYaml,
-  'generic',        // language hint
-  './node_modules/stackengine/dist/wasm'  // tree-sitter WASM directory
-);
-
-// sanitized: string with secrets replaced by __SE_*__ tokens
-// tokenMap: Record<string, string> mapping tokens → original values
-```
+Traditional scanners (Gitleaks, TruffleHog, Checkov, Trivy) operate as read-only alert mechanisms that halt builds (Exit 1) and demand manual intervention. StackEngine operates as an **active tokenization and remediation layer**: it redacts blocked configs in <50ms for external LLM debugging and generates syntax-validated fix PRs in CI/CD under Maker-Checker governance.
 
 ---
 
@@ -334,7 +323,7 @@ All regex rules use flat, non-nested quantifiers to prevent catastrophic backtra
 
 ### Stream Handling
 
-The proxy features real-time SSE streaming detokenization powered by `SlidingWindowStreamGrafter`. Rather than buffering entire responses, outbound chunks pass through a 32-byte sliding window that seamlessly reconstructs shadow tokens (`__SE_<TYPE>_<HASH6>__`) split across SSE chunk boundaries, restoring plaintext credentials with sub-2ms overhead. Non-streaming requests (`stream: false`) are restored in-place before final HTTP dispatch.
+The proxy features real-time SSE streaming detokenization powered by `SlidingWindowStreamGrafter`. Rather than buffering entire responses, outbound chunks pass through a 32-byte sliding window that reconstructs shadow tokens (`__SE_<TYPE>_<HASH6>__`) split across SSE chunk boundaries, restoring plaintext credentials with sub-2ms overhead. Non-streaming requests (`stream: false`) are restored in-place before final HTTP dispatch.
 
 ### Token Format
 
@@ -374,11 +363,11 @@ Found an unhandled credential pattern or grammar edge case? Please [open an issu
 
 StackEngine is built on a source-available architecture to provide inspectable local redaction and a bounded trust boundary for the community, while offering air-gapped automation for regulated enterprises.
 
-| Tier | Edition | Target Environment | Core Architecture |
+| Tier | Edition | Target Scope | Core Architecture |
 | :--- | :--- | :--- | :--- |
-| **Layer 1** | **Community** (`stackengine`) | Local Dev / Standalone | Source-available. Pure client-side WASM engine. Local proxy, clipboard redaction, and pre-commit secret blocking. |
-| **Layer 2** | **Team** (`CI/CD Automator`) | Engineering Teams | CI/CD runner PR bot & autonomous local debugging (`stackengine fix`). Matches 500+ hardcoded expert diagnostic matrices to draft verified PRs under Maker-Checker review. Native CI/CD step logs. |
-| **Layer 3** | **Enterprise** (`Air-Gapped`) | High-Compliance VPCs | 100% air-gapped on-premise Docker deployment. VPC-internal LLM routing (local Ollama / Azure Private Link), distributed Redis vault, and SOC2 SIEM streaming. |
+| **Layer 1** | **Community** (`stackengine`) | Individual Workstations & Small Repos (≤3 Committers) | Source-available. Pure client-side WASM engine. Clipboard (`copy`/`paste`), file redaction (`redact`/`restore`), local proxy, pre-commit blocking, and up to 2 local custom rules. |
+| **Layer 2** | **Team** (`CI/CD Automator`) | Engineering Teams (Up to 15 Committers / Pack) | Shared repo-level policy (`.stackengine.yaml` with unlimited rules), automated CI/CD remediation PRs (`stackengine fix`) across 500+ AWS IAM/Terraform/K8s rules, **Maker-Checker dual approval**, and **SHA-256 signed zero-plaintext-egress PR attestations** (SOC 2 evidence). |
+| **Layer 3** | **Enterprise** (`Air-Gapped`) | Fleet Control (>15 Committers / Regulated VPCs) | 100% air-gapped on-premise Docker deployment. VPC-internal LLM routing (local Ollama / Azure Private Link), distributed Redis vault, and SOC 2 SIEM streaming. |
 
 *For automated Maker-Checker PR pipelines and enterprise air-gapped deployments, refer to the [StackEngine Architecture Matrix](https://stackengine.dev).*
 
@@ -388,7 +377,8 @@ StackEngine is built on a source-available architecture to provide inspectable l
 
 StackEngine Community Edition is source-available under the [Business Source License 1.1](./LICENSE) (BUSL-1.1), converting to Apache-2.0 two years after each release.
 
-- **Free for:** personal development, internal company workflows, CI/CD pipelines, evaluation, and contributing back to this project.
+- **Free for (Community Edition scope):** individual developer workstation workflows—including clipboard tokenization & restoration (`copy`/`paste`), manual file redaction (`redact`/`restore`), local loopback proxy (`proxy`), pre-commit hooks (`init-hook` with ≤2 local custom rules), and standalone secret scanning (`scan`).
+- **Commercial License required for:** repository-wide shared policy enforcement (`.stackengine.yaml` or >2 custom rules), automated remediation & PR synthesis (`stackengine fix`), full SOC 2 control matrix exports (`policy export`), and unattended CI/CD execution in repositories exceeding 3 active Git committers (measured over a rolling 30-day window; Team Pack covers 4–15 committers; >15 requires Enterprise). See [Pricing & Editions](https://stackengine.dev/#pricing).
 - **Not permitted:** offering the functionality of StackEngine to third parties as a hosted commercial product, managed service, or competing developer security tooling.
 - **Change date:** each version converts automatically to Apache-2.0 two years after its release.
 
